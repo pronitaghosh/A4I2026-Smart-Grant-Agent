@@ -458,12 +458,22 @@ def test_small_input_heavy_sector_is_still_caught():
     assert mfg["corridor_share"] < 0.05 and mfg["flag"] == "over" and mfg["edge_generator_bias"]
     assert res["edge_generator_bias"]["sectors"] == ["Manufacturing"]
 
+def test_skew_that_follows_the_applicant_pool_is_not_called_bias():
+    # Food is over-represented against the corridor and its money is mostly cascade value, but it
+    # gets less money than its share of applicants: the allocator did not amplify it, so the skew
+    # comes from who applied, not from the edge generator.
+    funded = [row("r0", 3000), row("r1", 2000), row("p0", 2000, casc=0.0)]
+    res = audit(funded, NAICS, ["r0", "r1", "r2", "p0"], TRACT)
+    assert food(res)["flag"] == "over" and not food(res)["edge_generator_bias"]
+    assert food(res)["likely_cause"].startswith("the applicant pool")
+    assert res["edge_generator_bias"]["shows"] is False
+
 def test_caveats_say_the_applicants_are_a_chosen_scenario():
     res = audit([row("r0", 5000)], NAICS, ["r0"], TRACT)
-    assert any("scenario the team chose" in c for c in res["caveats"])
+    assert any("scenario the team chose" in c and "not real demand" in c for c in res["caveats"])
 ```
 
-Run: `cd agent && python -m pytest tests`. The allocator tests and the 6 new audit tests must pass.
+Run: `cd agent && python -m pytest tests`. The allocator tests and the 7 new audit tests must pass.
 
 ---
 
