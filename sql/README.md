@@ -13,7 +13,7 @@ bq query --use_legacy_sql=false < sql/03_business_tract.sql
 | File | Creates | Notes |
 |---|---|---|
 | `01_create_graph.sql` | Property graph `a4i_econ.LocalEconomy` | Nodes `Business`, `Employer`; edges `Supplies` (supplier to buyer), `DrawsFootfall` (block to business). Names match `agent/BUILD_GUIDE.md`. |
-| `02_applications.sql` | Table `a4i_econ.applications` | 11 applicants, verbatim from the build guide. Businesses are real; every financial field is illustrative and flagged `illustrative = TRUE`. |
+| `02_applications.sql` | Table `a4i_econ.applications` | 11 applicants chosen on purpose: the robust hub (Tradespace), three real cascades (Sour Flour, The Warfield Theater, Non Plus Ultra), three one-hop food businesses and four leaves. Businesses are real; every financial field is illustrative (the build guide's formulas) and flagged `illustrative = TRUE`. |
 | `03_business_tract.sql` | Table `a4i_econ.business_tract` | Each business's census tract and need signal. Deviates from the guide on purpose; see below. |
 
 ## Why `business_tract` uses ACS 2019, not `tract_demographics`
@@ -32,6 +32,6 @@ Result, checked 2026-11-17: 230 of 230 businesses have demographics; corridor av
 ## Checks worth rerunning
 
 ```sql
-SELECT COUNT(*), SUM(requested_amount) FROM a4i_econ.applications;        -- 11, $127,000
+SELECT COUNT(*), SUM(requested_amount) FROM a4i_econ.applications;        -- 11, $118,000
 SELECT COUNT(*), COUNTIF(poverty_rate IS NULL) FROM a4i_econ.business_tract;  -- 230, 0
 ```
