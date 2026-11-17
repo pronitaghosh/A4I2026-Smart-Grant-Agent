@@ -863,6 +863,7 @@ gcloud run deploy toolbox \
   --service-account toolbox-sa@$PROJECT_ID.iam.gserviceaccount.com \
   --region us-central1 \
   --set-secrets "/app/tools.yaml=tools:latest" \
+  --set-env-vars "PROJECT_ID=$PROJECT_ID" \
   --args="--tools-file=/app/tools.yaml","--address=0.0.0.0","--port=8080" \
   --min-instances=1 \
   --allow-unauthenticated   # hackathon shortcut; read-only predefined SQL over public data

@@ -13,6 +13,7 @@ from . import allocator
 PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT", "")
 DS = f"{PROJECT}.a4i_econ"
 GRAPH = "a4i_econ.LocalEconomy"
+MIN_LINK = 0.02
 _SAFE_ID = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
 
 MODELED_NOTE = (
@@ -67,9 +68,12 @@ def _cascades(seed_ids: list[str], depth: int) -> dict[str, dict]:
     LIMIT 50000
     """
     out: dict[str, dict] = {i: {} for i in ids}
-    for r in _rows(gql):
+    rows = _rows(gql)
+    if len(rows) >= 50000:
+        raise RuntimeError("Cascade path limit reached; reduce depth before recommending.")
+    for r in rows:
         nodes, ints = _parse_path(r["path_json"])
-        if len(nodes) < 2 or not ints or min(ints) < 0.02:
+        if len(nodes) < 2 or not ints or min(ints) < MIN_LINK:
             continue
         x = nodes[-1]["id"]
         w = allocator.path_weight(ints)
@@ -101,6 +105,7 @@ def get_cascade(business_id: str, depth: int = 2) -> dict:
     "what does this business hold up?" or "show me why". Returns each exposed business,
     the hop distance, the strongest path (names in order) and its link strengths.
     depth: 1-3, default 2. Three hops saturates this corridor; say so if you use it."""
+    depth = max(1, min(int(depth), 3))
     biz = _rows(f"SELECT business_id, name, address, naics4 FROM `{DS}.businesses` "
                 f"WHERE business_id = '{business_id}'") if _SAFE_ID.match(business_id) else []
     if not biz:
@@ -109,16 +114,22 @@ def get_cascade(business_id: str, depth: int = 2) -> dict:
     exposed = _cascades([business_id], depth).get(business_id, {})
     alts = _industry_counts().get(seed["naics4"], 1) - 1
     items = sorted(exposed.items(), key=lambda kv: -kv[1][0])
+    shown = items[:15]
+    multi = next((p for p in items if p[1][1] >= 2), None)
+    if multi and multi not in shown:
+        shown[-1] = multi
     return {
         "business": seed,
         "depth": depth,
         "exposed_count": len(items),
+        "min_link": MIN_LINK,
+        "traversal": f"GRAPH {GRAPH} MATCH p = (seed:Business)-[:Supplies]->{{1,{depth}}}(x:Business)",
         "by_hop": {h: sum(1 for _, v in items if v[1] == h) for h in range(1, depth + 1)},
         "local_alternatives_same_industry": alts,
         "is_leaf": len(items) == 0,
         "paths": [{"exposed_id": x, "hops": v[1], "weight": round(v[0], 3),
                    "path": " → ".join(v[2]),
-                   "link_intensities": [round(i, 4) for i in v[3]]} for x, v in items[:15]],
+                   "link_intensities": [round(i, 4) for i in v[3]]} for x, v in shown],
         "evidence_note": MODELED_NOTE,
     }
 
@@ -130,6 +141,7 @@ def recommend_grants(budget: float = 50000, depth: int = 2) -> dict:
     budget to maximise expected business closures avoided. Also returns the runner-up,
     every assumption, and a sensitivity check showing which awards survive if the
     assumptions are wrong. Use this for "who should we fund?" and "what does $X change?"."""
+    depth = max(1, min(int(depth), 3))
     apps_rows = _rows(f"""
       WITH ind AS (SELECT naics4, COUNT(*) AS n FROM `{DS}.businesses` GROUP BY naics4)
       SELECT a.application_id, a.business_id, b.name, b.address, b.naics4,
@@ -162,6 +174,7 @@ def recommend_grants(budget: float = 50000, depth: int = 2) -> dict:
 
     result = allocator.recommend(apps, float(budget), corridor_poverty)
     result["depth"] = depth
+    result["min_link"] = MIN_LINK
     result["evidence_note"] = MODELED_NOTE
     return result
 
