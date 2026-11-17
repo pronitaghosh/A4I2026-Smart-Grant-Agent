@@ -15,7 +15,8 @@ answers come from the same code and data.
 |---|---|
 | [`app.py`](app.py) | FastAPI backend: serves the UI and a small JSON API |
 | [`static/index.html`](static/index.html), [`static/app.js`](static/app.js), [`static/styles.css`](static/styles.css) | The UI: plain JavaScript modules, no build step |
-| [`sample/recommend_grants.json`](sample/recommend_grants.json), [`sample/get_cascade.json`](sample/get_cascade.json) | Saved tool output, served when the agent package can't be imported |
+| [`sample/recommend_grants.json`](sample/recommend_grants.json), [`sample/get_cascade.json`](sample/get_cascade.json), [`sample/audit_allocation.json`](sample/audit_allocation.json) | Saved tool output, served when the agent package can't be imported |
+| [`sample/capture_audit.py`](sample/capture_audit.py) | Recaptures the audit sample from the live tables; refuses if it would describe a different plan from `recommend_grants.json` |
 | [`Dockerfile`](Dockerfile), [`cloudbuild.yaml`](cloudbuild.yaml) | The deployed image: the desk plus `agent/grant_agent`, built from the repo root |
 | [`Procfile`](Procfile) | Start command for a source deploy of `frontend/` alone (sample mode) |
 | [`requirements.txt`](requirements.txt) | `fastapi`, `uvicorn`, `google-cloud-bigquery` |
@@ -38,6 +39,12 @@ answers come from the same code and data.
   - the assumptions in plain English
   - the evidence note
   - the strongest paths with their link strengths
+- **Equity check:** a line under the header with the audit's headline and an **Open the
+  audit** button. The audit view shows the memo's equity lines, a sector table (corridor,
+  applicants and money, with over/under flags and the likely cause), where the money lands on
+  poverty and car access, and which awards rest mainly on modeled links. Those awards also get a
+  "…% of value from modeled links" tag in their case. `/#audit` opens straight onto it, for the
+  demo video. If the audit fails, the line says so and the rest of the desk works.
 - **Ask the agent:** a question box prefilled with "Why fund X and not the runner-up?" or "Why
   isn't X funded?". The answer arrives as Markdown and is rendered with
   [marked](https://marked.js.org/). It's sanitized with
@@ -51,6 +58,7 @@ answers come from the same code and data.
 | `GET /` | Serves `static/` | — |
 | `GET /api/recommendation?budget=50000` | The funding queue: the full `recommend_grants()` output, plus `neighborhood` (each applicant's tract, poverty and no-vehicle rate) and `corridor_poverty`. Also `source`: `"live"` or `"sample"`. 503 if live data fails; 422 in sample mode for any budget other than $50,000 | `grant_agent.tools.recommend_grants()`, then two queries on `business_tract` |
 | `GET /api/cascade/{business_id}` | One applicant's cascade for the line map. 404 if the business doesn't exist | `grant_agent.tools.get_cascade()` |
+| `GET /api/audit?budget=50000` | The equity audit of the same plan: the full `audit_allocation()` output, plus `source`. 503 if live data fails; 404 if there's no sample; 422 in sample mode for other budgets. A live desk never pairs its plan with a sample audit | `grant_agent.tools.audit_allocation()` |
 | `POST /api/ask` `{"question": "...", "business_id": "16"}` | Creates an ADK session on the deployed agent, sends the question (with the business ID appended) to `POST /run`, and returns `{"answer": "<the agent's last text>"}` | The agent at `AGENT_URL` |
 
 Error handling for `/api/ask`:

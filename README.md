@@ -26,7 +26,7 @@ for $118,000. Who should we fund, how much, and why?"*
 |---|---|
 | **Impact & insight** (30) | [The recommendation on the live data](#the-recommendation-on-the-live-data): who to fund, how much, the cascade, the runner-up. Open the [live desk](https://grant-desk-173086820802.us-west2.run.app) and ask the agent "We have $50,000. Who should we fund?" |
 | **Technical execution** (30) | A deployed ADK agent with a real multi-hop `MATCH` over a BigQuery property graph: [How it works](#how-it-works), [requirements map](#challenge-requirements-and-where-each-is-met), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
-| **Rigor & judgment** (25) | [What is real and what is modeled](#what-is-real-and-what-is-modeled) · [Validation and equity audit](#validation-and-equity-audit) · [Hub check](#hub-check-the-same-50000-three-ways), on when we don't fund the biggest hub · [Limitations](#limitations) · every assumption in [`allocator.py`](agent/grant_agent/allocator.py) with a [sensitivity check](agent/README.md#the-allocator-grant_agentallocatorpy) |
+| **Rigor & judgment** (25) | [What is real and what is modeled](#what-is-real-and-what-is-modeled) · [Validation and equity audit](#validation-and-equity-audit), run by the agent's own `audit_allocation` tool and shown in the desk · [Hub check](#hub-check-the-same-50000-three-ways), on when we don't fund the biggest hub · [Limitations](#limitations) · every assumption in [`allocator.py`](agent/grant_agent/allocator.py) with a [sensitivity check](agent/README.md#the-allocator-grant_agentallocatorpy) |
 | **Craft & communication** (15) | The grant desk: a funding queue with one line map per applicant, because the officer has to defend a list, not read a chat log ([frontend/README.md](frontend/README.md)) |
 | **Bonus: range** | MCP Toolbox for Databases on Cloud Run, a custom funding-queue UI, a sensitivity analysis across five alternative assumptions, and a census fix that recovered neighborhood data for 228 of 230 businesses |
 
@@ -132,7 +132,7 @@ flowchart LR
     desk -- "queue and line maps<br/>(same Python tools)" --> tools
     desk -- "Ask the agent" --> agent["<b>ADK agent</b><br/>agent/grant_agent/"]
     agent -- "plans, writes prose" --> gemini[("Gemini 3.8 Flash<br/>Vertex AI · global")]
-    agent --> tools["<b>Our tools</b><br/>get_cascade · recommend_grants<br/>exposed_non_applicants"]
+    agent --> tools["<b>Our tools</b><br/>get_cascade · recommend_grants<br/>exposed_non_applicants · audit_allocation"]
     agent -- MCP --> toolbox["<b>MCP Toolbox</b><br/>4 read-only SQL tools"]
     tools -- "multi-hop GQL MATCH" --> graph[["BigQuery property graph<br/>a4i_econ.LocalEconomy"]]
     tools --> alloc["<b>allocator.py</b><br/>risk × cascade × need<br/>→ awards"]
@@ -162,7 +162,7 @@ flowchart LR
    where the same money would go instead, and what it would avoid there. It then reruns under
    five alternative assumptions to show which awards are stable.
 4. **The agent.** [`agent.py`](agent/grant_agent/agent.py) is an ADK agent on Gemini 3.8 Flash
-   with our three Python tools and four MCP Toolbox tools. [`prompt.py`](agent/grant_agent/prompt.py)
+   with our four Python tools and four MCP Toolbox tools. [`prompt.py`](agent/grant_agent/prompt.py)
    sets its rules: every number from a tool, call modeled links modeled, say so when the data can't
    separate two applicants, never fund a business just for being connected, no race or ethnicity.
 
@@ -178,7 +178,7 @@ The full picture, with the deployed services, request flows and how to redeploy,
 | ADK agent, in Python | [`agent/grant_agent/agent.py`](agent/grant_agent/agent.py): `root_agent` |
 | Gemini | `gemini-3.8-flash` on Vertex AI's `global` endpoint (set by `GEMINI_MODEL` and `GOOGLE_CLOUD_LOCATION`) |
 | BigQuery property graph, genuinely traversed with a multi-hop `MATCH` | Graph: [`sql/01_create_graph.sql`](sql/01_create_graph.sql). Traversal: `_cascades` in [`tools.py`](agent/grant_agent/tools.py), quantified path `{1,2}`, up to `{1,3}` |
-| At least one tool we built | `get_cascade`, `recommend_grants`, `exposed_non_applicants` in [`tools.py`](agent/grant_agent/tools.py); the allocation logic in [`allocator.py`](agent/grant_agent/allocator.py) |
+| At least one tool we built | `get_cascade`, `recommend_grants`, `exposed_non_applicants` and `audit_allocation` in [`tools.py`](agent/grant_agent/tools.py); the allocation logic in [`allocator.py`](agent/grant_agent/allocator.py); the equity audit in [`audit.py`](agent/grant_agent/audit.py) |
 | At least one Google-managed MCP server, consumed | [MCP Toolbox for Databases](https://github.com/googleapis/mcp-toolbox), configured in [`agent/toolbox/tools.yaml`](agent/toolbox/tools.yaml), deployed on Cloud Run, connected through ADK's `ToolboxToolset` |
 | Deployed to Google Cloud | Cloud Run, us-west2: `grant-desk`, `grant-agent`, `toolbox`, each with one instance kept warm |
 
@@ -207,13 +207,26 @@ Checked on the loaded data on 2026-11-17; details in [docs/TEAM_NOTES.md](docs/T
   two hops down, matching the brief.
 - All 230 businesses have census data. The organizers' `tract_demographics` covered only 2 of
   them; [`sql/03_business_tract.sql`](sql/03_business_tract.sql) explains the fix.
-- **Where the money lands:** the dollar-weighted tract poverty of the grants is 24.8%, against a
-  corridor average of 21.5%. 8 of the 9 grants are in tracts above the average.
-- **Industry bias:** food and lodging gets 51.5% of the money but is 28% of the corridor's
-  businesses. Tech, personal services and health get nothing. Part of this is the bias the brief
-  predicts, because input-heavy industries get more modeled supply links. Part comes from how the
-  queue was chosen: we picked applicants with real cascades, and those are mostly food
-  businesses. Personal and health services had no applicants.
+The equity audit is a tool, not a one-off analysis. The agent's `audit_allocation`
+([`audit.py`](agent/grant_agent/audit.py)) audits whatever plan `recommend_grants` makes, and its
+memo lines go into every Grant Memo. The desk shows it as an "Equity check" line and a full audit
+view (open `/#audit`). It uses industry, tract poverty and car access only, never race.
+
+- **Where the money lands:** residents below poverty are 25% where the money lands
+  (dollar-weighted), against a 21% corridor average; households without a car, 81% against 74%.
+  8 of the 9 grants are in tracts above the poverty average.
+- **Industry mix:** food service gets 52% of the money but is 28% of corridor businesses (1.8x),
+  and manufacturing 18% against 7%. Professional services, personal services and health care get
+  nothing; none of them applied.
+- **Is it the edge generator's bias?** The brief warns that modeled supply links favor
+  input-heavy industries. The audit flags that bias only when the allocator gives such a sector
+  more than its share of applicants *and* most of that money rests on modeled cascades. On this
+  plan it doesn't. The skew traces to the applicant pool, which is a scenario we chose to include
+  real cascades, and the modeled links make real cascades more common in food businesses. The
+  one gap the allocator itself causes is Information: that's Tradespace, the hub it declines on
+  purpose.
+- **Resting on modeled links:** 14% of the plan's value (dollar-weighted) comes from modeled
+  cascades, almost all of it Sour Flour's (95% of its value).
 
 ## Limitations
 
@@ -238,7 +251,8 @@ agent/
   grant_agent/            The ADK agent (deployed as grant-agent)
     agent.py                root_agent: Gemini + 3 Python tools + MCP Toolbox toolset
     prompt.py               System instruction: tool routing, answer format, rules
-    tools.py                BigQuery tools: get_cascade, recommend_grants, exposed_non_applicants
+    tools.py                BigQuery tools: get_cascade, recommend_grants, exposed_non_applicants, audit_allocation
+    audit.py                The equity audit: sector mix, tract need, reliance on modeled links
     allocator.py            The judgment layer: closure risk, path weights, greedy allocation, sensitivity
     requirements.txt        google-adk[toolbox], google-cloud-bigquery, toolbox-core
   grant_tools/            Reference cascade query with NODES(p) paths and a weakest-link rule (tested; not called in production)
@@ -246,12 +260,12 @@ agent/
   toolbox/deploy.sh       Deploys the Toolbox to Cloud Run (service account, secret, service)
   tests/test_allocator.py Unit tests, including the "don't fund the robust hub" cases
   BUILD_GUIDE.md          The agent lane's step-by-step build guide
-  EQUITY_AUDIT_BUILD.md   Build plan for an equity-audit agent tool and desk panel (planned)
+  EQUITY_AUDIT_BUILD.md   How the equity audit was built: agent tool, desk view, story handoff
   README.md               How to run, test and deploy the agent
 frontend/                 The grant desk (deployed as grant-desk)
   app.py                    FastAPI backend: /api/recommendation, /api/cascade/{id}, /api/ask
   static/                   The UI: index.html, app.js (queue, case view, line map), styles.css
-  sample/                   Saved tool output, served when the agent package isn't importable
+  sample/                   Saved tool output (incl. the equity audit), served when the agent package isn't importable
   Dockerfile, cloudbuild.yaml, Procfile, requirements.txt
   README.md                 How to run and deploy the desk
 sql/                      The graph and the two tables the agent reads, run in order

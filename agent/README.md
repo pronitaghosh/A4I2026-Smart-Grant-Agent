@@ -12,7 +12,7 @@ https://grant-agent-173086820802.us-west2.run.app. The grant desk (`frontend/`) 
 |---|---|
 | [`grant_agent/agent.py`](grant_agent/agent.py) | `root_agent`: the model, the instruction and the tool list |
 | [`grant_agent/prompt.py`](grant_agent/prompt.py) | `SYSTEM_INSTRUCTION`: which tool answers which question, the answer format, the rules |
-| [`grant_agent/tools.py`](grant_agent/tools.py) | The three Python tools, and the multi-hop graph traversal behind them |
+| [`grant_agent/tools.py`](grant_agent/tools.py) | The four Python tools, and the multi-hop graph traversal behind them |
 | [`grant_agent/allocator.py`](grant_agent/allocator.py) | The judgment layer: closure risk, path weights, allocation, sensitivity. Pure Python, no BigQuery |
 | [`grant_agent/requirements.txt`](grant_agent/requirements.txt) | `google-adk[toolbox]`, `google-cloud-bigquery`, `toolbox-core` |
 | [`toolbox/tools.yaml`](toolbox/tools.yaml) | MCP Toolbox for Databases config: four parameterized SQL tools, with the source set to `readOnly` and limited to the `a4i_econ` dataset |
@@ -20,7 +20,9 @@ https://grant-agent-173086820802.us-west2.run.app. The grant desk (`frontend/`) 
 | [`tests/test_allocator.py`](tests/test_allocator.py) | Allocator unit tests |
 | [`grant_tools/`](grant_tools/) | A reference cascade query and memo-reason writer. Tested, but not called by the agent |
 | [`BUILD_GUIDE.md`](BUILD_GUIDE.md) | The step-by-step guide this package was built from, with the officer questions to test against |
-| [`EQUITY_AUDIT_BUILD.md`](EQUITY_AUDIT_BUILD.md) | Build plan for an equity-audit tool (agent tool, desk panel, story handoff). Planned, not built yet; the current audit numbers are in [TEAM_NOTES.md](../docs/TEAM_NOTES.md#equity-audit-for-the-deck) |
+| [`grant_agent/audit.py`](grant_agent/audit.py) | The equity audit behind `audit_allocation`: each sector's share of corridor, applicants and money; tract need; reliance on modeled links. Pure Python |
+| [`tests/test_audit.py`](tests/test_audit.py) | Equity audit unit tests |
+| [`EQUITY_AUDIT_BUILD.md`](EQUITY_AUDIT_BUILD.md) | How the equity audit was built, step by step (agent tool, desk view, story handoff) |
 
 ## The agent
 
@@ -65,6 +67,7 @@ ADK sends each tool's docstring to Gemini as its description.
 | `recommend_grants(budget=50000, depth=2)` | "Who should we fund?", "What does $X change?" | `budget`, `allocated`, `unallocated`, `expected_closures_avoided_total` (unweighted), `need_weighted_priority_total`, `min_link`, `recommended[]` (in priority order) and `not_funded[]` (per applicant: `award`, `pct_of_request`, `pct_of_budget`, `baseline_risk`, `risk_after_award`, `downstream_exposed`, `closures_avoided_by_this_grant`, `closures_avoided_per_10k_if_fully_funded`, `reasons[]`, and for each grant its own `runner_up`), the queue's `runner_up`, `weakest_funded`, `assumptions`, `sensitivity`, `evidence_note` |
 | `get_cascade(business_id, depth=2)` | "What does this business hold up?", "Show me why" | `business`, `exposed_count`, `by_hop`, `local_alternatives_same_industry`, `is_leaf`, `traversal` (the GQL `MATCH` it ran), `min_link`, up to 15 strongest `paths[]` (`path` as "A → B → C", `hops`, `weight`, `link_intensities`), always including a multi-hop path when one exists, and `evidence_note` |
 | `exposed_non_applicants(depth=2)` | "Who else is at risk?", "Should someone downstream have applied?" | Up to 15 businesses downstream of applicants that didn't apply: the chains reaching them, the strongest weight, and any real SBA charge-off |
+| `audit_allocation(budget=50000, depth=2)` | "Is this fair?", "Who does this leave out?", "Any bias?", and the memo's equity lines | Audits the plan `recommend_grants` makes (cached, so it adds little time): `headline`, `memo_lines` (quoted verbatim in the memo), `findings`, `industry[]` (each sector's share of corridor businesses, applicants and money, with an over/under `flag` and `likely_cause`), `edge_generator_bias`, `need` (tract poverty and car access, dollar-weighted), `modeled_evidence` (how much value rests on modeled cascades), `caveats`, `thresholds`. Industry, poverty and car access only, never race |
 
 How `recommend_grants` works:
 

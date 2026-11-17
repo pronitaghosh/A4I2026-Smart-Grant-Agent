@@ -158,6 +158,11 @@ Merge into `main` through pull requests; check the open PRs for what isn't in ye
 
 ## Equity audit (for the deck)
 
+The agent now runs this audit itself: `audit_allocation` ([`audit.py`](../agent/grant_agent/audit.py)), shown in the
+desk's audit view (`/#audit`). Its sector groups differ slightly from the table below (for example, it
+splits Information from Professional services), and it traces the food-service skew to the applicant
+pool rather than to the edge generator. Quote the tool's `memo_lines` in the deck.
+
 From the live allocation ($50,000, 9 grants, $49,500), against all 230 corridor businesses.
 Updated after the applicant swap; the earlier figures described a different queue.
 
