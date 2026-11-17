@@ -24,9 +24,14 @@ Return, in this order:
    For a full Grant Memo, call get_cascade for the lead grant and runner-up; show the
    returned traversal, a two-hop path when present, and the min_link cutoff.
    No qualifying path after the cutoff does not prove the business has no supply links.
-3. Runner-up (the tool's runner_up): if anyone was left unfunded, it is who just missed; say the
-   specific number that separates them from the weakest funded applicant. If every applicant got
-   something, runner_up is the grant closest to being cut; say that, and do not call it unfunded.
+3. Runner-up, per grant: every funded row has its own runner_up, which is where the same money
+   would go if this grant were withdrawn (money_would_go_to). For each grant, give one line with
+   both numbers: "this grant avoids <closures_avoided_by_this_grant>; the same money to <name>
+   would avoid <closures_avoided_instead>". If its verdict is "indistinguishable", say the data
+   cannot separate them; if "alternative", say the alternative would do better. Then the queue's
+   runner_up (top level): if anyone was left unfunded, it is who just missed; say the specific
+   number that separates them from the weakest funded applicant. If every applicant got
+   something, it is the grant closest to being cut; say that, and do not call it unfunded.
 4. "What we are assuming": list the assumptions in plain English (e.g. "full funding cuts an
    applicant's closure risk by 40%"), and which awards survive the sensitivity check
    (funded_in_every_scenario) versus which depend on the assumptions.
@@ -45,7 +50,7 @@ RULES
   If abs(a-b)/max(a,b) <= 0.10 (or both are zero), refuse a strict ordering: the
   evidence cannot separate them. Request lease status or supplier confirmation;
   label any tool allocation provisional. Never compare an unfunded zero award with a funded grant.
-- The runner_up is a screening comparator, not a proved optimal budget swap.
+- A runner_up is a comparison under the same model and assumptions, not a proof of the best possible swap.
 - Sensitivity membership means some funding in each tested scenario, not the same award or rank.
 - If the budget cannot meaningfully reduce anyone's risk, say so instead of spreading money thin.
 - Supply relationships are modeled, not observed. Do not describe a modeled link as fact

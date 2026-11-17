@@ -158,8 +158,9 @@ flowchart LR
    uniqueness × downstream exposure) × neighborhood need. It hands out the budget in 25% slices of
    each request, always to whoever buys the most need-weighted protection per dollar. Every
    business, applicant or downstream, counts once, at its best protection. The total it reports
-   is the unweighted count of expected closures avoided. It then reruns under five alternative
-   assumptions to show which awards are stable.
+   is the unweighted count of expected closures avoided. For every grant it names a runner-up:
+   where the same money would go instead, and what it would avoid there. It then reruns under
+   five alternative assumptions to show which awards are stable.
 4. **The agent.** [`agent.py`](agent/grant_agent/agent.py) is an ADK agent on Gemini 2.5 Flash
    with our three Python tools and four MCP Toolbox tools. [`prompt.py`](agent/grant_agent/prompt.py)
    sets its rules: every number from a tool, call modeled links modeled, say so when the data can't
