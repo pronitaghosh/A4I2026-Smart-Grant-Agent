@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Central Market relief fund</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Overpass:wght@500;700;800&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="desk">
+    <div class="desk-title">
+      <p class="eyebrow">Economic development · Grant desk</p>
+      <h1>Central Market relief fund</h1>
+      <p class="desk-sub" id="desk-sub">Loading applications…</p>
+      <p class="source-banner" id="source-banner" hidden></p>
+    </div>
+    <div class="budget">
+      <p class="budget-figures"><span id="budget-allocated">$0</span> <span class="muted">allocated of</span> <span id="budget-total">$0</span></p>
+      <div class="budget-bar" id="budget-bar" role="img" aria-label="Budget allocation"></div>
+    </div>
+  </header>
+
+  <main class="desk-main">
+    <nav class="queue" aria-labelledby="queue-h">
+      <h2 id="queue-h" class="section-label">Applications</h2>
+      <ol class="queue-list" id="queue-list"></ol>
+    </nav>
+    <section class="case" id="case" aria-live="polite">
+      <p class="case-empty">Choose an application to see the case.</p>
+    </section>
+  </main>
+
+  <script src="app.js" type="module"></script>
+</body>
+</html>
