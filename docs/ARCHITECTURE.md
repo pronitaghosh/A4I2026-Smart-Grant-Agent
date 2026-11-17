@@ -66,6 +66,7 @@ A small FastAPI app that serves the web UI and a JSON API.
 | `GET /` | Serves the UI (`frontend/static/`) | — |
 | `GET /api/recommendation?budget=50000` | The funding queue: awards, % of ask, closure risk before and after, reasons, runner-up, assumptions, sensitivity, plus each applicant's tract poverty and the corridor average | `grant_agent.tools.recommend_grants()`, then `business_tract` |
 | `GET /api/cascade/{business_id}` | One applicant's cascade for the line map: exposed businesses by hop and the 15 strongest paths with link strengths | `grant_agent.tools.get_cascade()` |
+| `GET /api/audit?budget=50000` | The equity audit of the same plan, for the desk's "Equity check" line and audit view | `grant_agent.tools.audit_allocation()` (reuses the cached plan) |
 | `POST /api/ask` `{question, business_id}` | Opens a new ADK session on the agent, sends the question to `POST /run`, and returns the agent's final text | The deployed agent, via `AGENT_URL` |
 
 Behaviors worth knowing:
@@ -90,9 +91,10 @@ Behaviors worth knowing:
 
 | File | Role |
 |---|---|
-| `agent.py` | Defines `root_agent` (Gemini model from `GEMINI_MODEL`) with three Python tools, plus the Toolbox tools when `TOOLBOX_URL` is set |
+| `agent.py` | Defines `root_agent` (Gemini model from `GEMINI_MODEL`) with four Python tools (`recommend_grants`, `get_cascade`, `exposed_non_applicants`, `audit_allocation`), plus the Toolbox tools when `TOOLBOX_URL` is set |
 | `prompt.py` | System instruction: who the officer is, which tool answers which question, the answer format, and the rules (every number from a tool, say what's modeled, refuse when the data can't separate two applicants, no race or ethnicity) |
-| `tools.py` | `get_cascade(business_id, depth=2)`: multi-hop GQL over `LocalEconomy`, following `Supplies` forward, skipping any path with a link below 0.02, strongest path per exposed business. Returns the GQL `traversal` and `min_link` it used, and always includes a multi-hop path when one exists. `recommend_grants(budget)`: loads applications, tract need, industry alternatives and SBA charge-offs, traces every cascade in one query, then calls the allocator. `exposed_non_applicants()`: businesses downstream of applicants that never applied |
+| `tools.py` | `get_cascade(business_id, depth=2)`: multi-hop GQL over `LocalEconomy`, following `Supplies` forward, skipping any path with a link below 0.02, strongest path per exposed business. Returns the GQL `traversal` and `min_link` it used, and always includes a multi-hop path when one exists. `recommend_grants(budget)`: loads applications, tract need, industry alternatives and SBA charge-offs, traces every cascade in one query, then calls the allocator. `exposed_non_applicants()`: businesses downstream of applicants that never applied. `audit_allocation(budget)`: the equity audit of the plan (see `audit.py`) |
+| `audit.py` | The equity audit behind `audit_allocation`: sector shares of corridor, applicants and money with over/under flags and a likely cause; tract poverty and car access, dollar-weighted; how much value rests on modeled cascades. Separates "who applied" from "how the allocator chose". Industry, poverty and car access only, never race |
 | `allocator.py` | Pure Python, no BigQuery. Value of a grant = drop in the applicant's closure risk × (1 + contagion × uniqueness × downstream exposure) × neighborhood need. Allocates in slices to maximize need-weighted protection, counting every business once. Reports the unweighted count of expected closures avoided. Reruns under 5 alternative assumptions to show which awards are stable. Refuses duplicate registrations and invalid budgets or requests. All assumptions are in one `ASSUMPTIONS` dict |
 | `tests/test_allocator.py` | Seven unit tests, no credentials needed (`cd agent && python -m pytest tests`). They cover the robust hub (including the shape of Tradespace's real paths through `_cascades`), leaves, the budget, duplicates, the unweighted total, overlap counted once, and the path limit |
 

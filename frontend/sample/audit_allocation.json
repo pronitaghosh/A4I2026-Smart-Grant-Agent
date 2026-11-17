@@ -1,0 +1,204 @@
+{
+ "meta": {
+  "captured": "2026-11-17",
+  "source": "agent/grant_agent audit_allocation on live a4i_econ tables"
+ },
+ "audit_allocation": {
+  "headline": "Food service is over-represented: 52% of the money vs 28% of corridor businesses (1.8x). Likely cause: the applicant pool (the scenario's chosen applicants, not real demand).",
+  "memo_lines": [
+   "Food service is over-represented: 52% of the money vs 28% of corridor businesses (1.8x). Likely cause: the applicant pool (the scenario's chosen applicants, not real demand).",
+   "Residents below poverty: 25% where the money lands (dollar-weighted) vs 21% corridor average, poorer than average.",
+   "Households without a car: 81% where the money lands (dollar-weighted) vs 74% corridor average, more car-free than average.",
+   "No sign of the edge generator's bias toward input-heavy industries in this plan."
+  ],
+  "findings": [
+   "Food service is over-represented: 52% of the money vs 28% of corridor businesses (1.8x). Likely cause: the applicant pool (the scenario's chosen applicants, not real demand).",
+   "Professional services is under-represented: 0% of the money vs 16% of corridor businesses (0.0x). Likely cause: no applicants from this sector.",
+   "Personal & repair services is under-represented: 0% of the money vs 12% of corridor businesses (0.0x). Likely cause: no applicants from this sector.",
+   "Manufacturing is over-represented: 18% of the money vs 7% of corridor businesses (2.8x). Likely cause: the applicant pool (the scenario's chosen applicants, not real demand).",
+   "Health care is under-represented: 0% of the money vs 11% of corridor businesses (0.0x). Likely cause: no applicants from this sector.",
+   "Information is under-represented: 0% of the money vs 9% of corridor businesses (0.0x). Likely cause: the allocator (money share differs from applicant share).",
+   "Residents below poverty: 25% where the money lands (dollar-weighted) vs 21% corridor average, poorer than average.",
+   "Households without a car: 81% where the money lands (dollar-weighted) vs 74% corridor average, more car-free than average.",
+   "No sign of the edge generator's bias toward input-heavy industries in this plan.",
+   "1 of 9 awards are driven mainly by modeled supply links (Sour Flour)."
+  ],
+  "industry": [
+   {
+    "sector": "Arts & recreation",
+    "corridor_share": 0.048,
+    "applicant_share": 0.182,
+    "money_share": 0.121,
+    "money_vs_corridor": null,
+    "cascade_share_of_money": 0.32,
+    "flag": "",
+    "likely_cause": "",
+    "edge_generator_bias": false
+   },
+   {
+    "sector": "Food service",
+    "corridor_share": 0.283,
+    "applicant_share": 0.455,
+    "money_share": 0.515,
+    "money_vs_corridor": 1.82,
+    "cascade_share_of_money": 0.0,
+    "flag": "over",
+    "likely_cause": "the applicant pool (the scenario's chosen applicants, not real demand)",
+    "edge_generator_bias": false
+   },
+   {
+    "sector": "Health care",
+    "corridor_share": 0.109,
+    "applicant_share": 0.0,
+    "money_share": 0.0,
+    "money_vs_corridor": 0.0,
+    "cascade_share_of_money": null,
+    "flag": "under",
+    "likely_cause": "no applicants from this sector",
+    "edge_generator_bias": false
+   },
+   {
+    "sector": "Information",
+    "corridor_share": 0.087,
+    "applicant_share": 0.091,
+    "money_share": 0.0,
+    "money_vs_corridor": 0.0,
+    "cascade_share_of_money": null,
+    "flag": "under",
+    "likely_cause": "the allocator (money share differs from applicant share)",
+    "edge_generator_bias": false
+   },
+   {
+    "sector": "Manufacturing",
+    "corridor_share": 0.065,
+    "applicant_share": 0.182,
+    "money_share": 0.182,
+    "money_vs_corridor": 2.79,
+    "cascade_share_of_money": 0.53,
+    "flag": "over",
+    "likely_cause": "the applicant pool (the scenario's chosen applicants, not real demand)",
+    "edge_generator_bias": false
+   },
+   {
+    "sector": "Personal & repair services",
+    "corridor_share": 0.122,
+    "applicant_share": 0.0,
+    "money_share": 0.0,
+    "money_vs_corridor": 0.0,
+    "cascade_share_of_money": null,
+    "flag": "under",
+    "likely_cause": "no applicants from this sector",
+    "edge_generator_bias": false
+   },
+   {
+    "sector": "Professional services",
+    "corridor_share": 0.161,
+    "applicant_share": 0.0,
+    "money_share": 0.0,
+    "money_vs_corridor": 0.0,
+    "cascade_share_of_money": null,
+    "flag": "under",
+    "likely_cause": "no applicants from this sector",
+    "edge_generator_bias": false
+   },
+   {
+    "sector": "Retail",
+    "corridor_share": 0.126,
+    "applicant_share": 0.091,
+    "money_share": 0.182,
+    "money_vs_corridor": 1.44,
+    "cascade_share_of_money": 0.0,
+    "flag": "",
+    "likely_cause": "",
+    "edge_generator_bias": false
+   }
+  ],
+  "edge_generator_bias": {
+   "shows": false,
+   "sectors": []
+  },
+  "need": {
+   "poverty_rate": {
+    "corridor_avg": 0.215,
+    "applicant_avg": 0.232,
+    "funded_dollar_weighted": 0.248
+   },
+   "no_vehicle_rate": {
+    "corridor_avg": 0.738,
+    "applicant_avg": 0.78,
+    "funded_dollar_weighted": 0.807
+   }
+  },
+  "modeled_evidence": {
+   "plan_cascade_share_dollar_weighted": 0.14,
+   "cascade_driven_awards": [
+    {
+     "business_id": "16",
+     "name": "Sour Flour",
+     "award": 5000.0,
+     "cascade_share": 0.95
+    }
+   ]
+  },
+  "caveats": [
+   "Only 9 funded businesses: shares move a lot with one award. Read directions, not decimals.",
+   "The applicant queue is a scenario the team chose (sql/02_applications.sql) to include a hub, real cascades, one-hop food businesses and leaves. A skew traced to the applicant pool reflects that choice, not real demand.",
+   "Supply links are modeled from BEA industry rates, which favour input-heavy industries.",
+   "Tract location comes from business coordinates; demographics are ACS 2019 five-year estimates.",
+   "Race and ethnicity are not used anywhere, including this audit."
+  ],
+  "thresholds": {
+   "over": 1.5,
+   "under": 0.67,
+   "min_sector_share": 0.05,
+   "over_gap": 0.1,
+   "cascade_driven": 0.5,
+   "input_heavy_sectors": [
+    "Food service",
+    "Manufacturing"
+   ]
+  },
+  "plan": {
+   "budget": 50000.0,
+   "allocated": 49500.0,
+   "funded": [
+    {
+     "name": "Sour Flour",
+     "award": 5000.0
+    },
+    {
+     "name": "Eddy St Bodega Inc",
+     "award": 9000.0
+    },
+    {
+     "name": "Honeybee Foods Corporation Dba Jollibee",
+     "award": 9000.0
+    },
+    {
+     "name": "Blue Bottle Coffee LLC",
+     "award": 7000.0
+    },
+    {
+     "name": "San Francisco Proper Hotel - Villon",
+     "award": 6000.0
+    },
+    {
+     "name": "The Warfield Theater",
+     "award": 4000.0
+    },
+    {
+     "name": "Oak Tree Hotel",
+     "award": 3500.0
+    },
+    {
+     "name": "Soliome Inc",
+     "award": 4000.0
+    },
+    {
+     "name": "Non Plus Ultra",
+     "award": 2000.0
+    }
+   ]
+  }
+ }
+}
