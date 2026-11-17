@@ -229,13 +229,15 @@ The table uses the project-number form.
 ## Security and access
 
 - **Read-only data access.** The Toolbox can only run the four parameterized `SELECT`s in
-  `tools.yaml`, and its BigQuery source is set to `readOnly: true`, limited to the `a4i_econ`
-  dataset. The Python tools build their SQL from IDs checked against
+  `tools.yaml`, over a source limited to the `a4i_econ` dataset, as `toolbox-sa`, which can read
+  but not write. (The source's `readOnly: true` flag is deliberately off: it makes the Toolbox
+  hide every custom-SQL tool.) The Python tools build their SQL from IDs checked against
   `^[A-Za-z0-9._-]{1,64}$`, and from the clamped depth.
 - **Model output is sanitized.** The desk renders the agent's Markdown through DOMPurify.
-- **Open endpoints.** The desk calls the agent, and the agent calls the Toolbox, without identity
-  tokens, so all three services accept unauthenticated requests. That's acceptable for a demo over
-  public data with read-only queries. For real use, require IAM invocation and send ID tokens.
+- **A private Toolbox.** The Toolbox accepts calls only from the agent's service account
+  (Cloud Run Invoker on that one service). The agent sends a Google ID token with each call. The
+  desk and the agent accept unauthenticated requests, because the desk is the public demo and calls
+  the agent without a token; for real use, put both behind IAM too.
 - **Service accounts.** The Toolbox runs as `toolbox-sa`, which has only BigQuery Job User, Data
   Viewer and Secret Accessor. The desk and the agent run as the default compute service account,
   which is broader than the PRD's least-privilege target.
@@ -254,5 +256,6 @@ The table uses the project-number form.
 | In sample mode the desk ignored the `budget` parameter | The sample always showed the $50,000 run | **Fixed** (PR #15): other budgets return 422 in sample mode |
 | The traversal returns at most 50,000 paths | Cascades would be undercounted if the limit were hit | **Fixed** (PR #15): hitting the limit is now an error, not a silent truncation. Not reached here: every 1-to-3-hop `Supplies` path in the corridor totals 26,124 |
 | The reported "expected closures avoided" included the need multiplier | The headline number wasn't strictly a count of closures | **Fixed** (PR #15): the reported total is unweighted (4.18); need still drives who is funded |
+| From 2:34 pm to about 4 pm on 2026-11-17 the agent couldn't reach the Toolbox | A redeploy made the Toolbox private (403), and a later config with `readOnly: true` loaded zero tools. The agent kept answering from its own tools, so it went unnoticed | **Fixed:** the Toolbox is private and the agent authenticates with an ID token; `readOnly` removed. Check the agent's logs for `403` or the Toolbox's for `Initialized 0 tools` after any change |
 | The desk and the agent use the default compute service account | Broader access than needed | Open. See Security and access |
 | No run log of inputs, queries and outputs (a PRD auditability target) | A recommendation can't be replayed later from a log | Open. The allocation is deterministic, so rerunning on the same tables reproduces it |

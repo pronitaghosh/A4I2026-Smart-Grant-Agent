@@ -15,7 +15,7 @@ https://grant-agent-173086820802.us-west2.run.app. The grant desk (`frontend/`) 
 | [`grant_agent/tools.py`](grant_agent/tools.py) | The four Python tools, and the multi-hop graph traversal behind them |
 | [`grant_agent/allocator.py`](grant_agent/allocator.py) | The judgment layer: closure risk, path weights, allocation, sensitivity. Pure Python, no BigQuery |
 | [`grant_agent/requirements.txt`](grant_agent/requirements.txt) | `google-adk[toolbox]`, `google-cloud-bigquery`, `toolbox-core` |
-| [`toolbox/tools.yaml`](toolbox/tools.yaml) | MCP Toolbox for Databases config: four parameterized SQL tools, with the source set to `readOnly` and limited to the `a4i_econ` dataset |
+| [`toolbox/tools.yaml`](toolbox/tools.yaml) | MCP Toolbox for Databases config: four parameterized `SELECT`s over a source limited to the `a4i_econ` dataset. Don't add `readOnly: true`: it hides every custom-SQL tool |
 | [`toolbox/deploy.sh`](toolbox/deploy.sh) | Deploys the Toolbox to Cloud Run: service account, `tools` secret, service. Safe to re-run |
 | [`tests/test_allocator.py`](tests/test_allocator.py) | Allocator unit tests |
 | [`grant_tools/`](grant_tools/) | A reference cascade query and memo-reason writer. Tested, but not called by the agent |
@@ -34,8 +34,10 @@ https://grant-agent-173086820802.us-west2.run.app. The grant desk (`frontend/`) 
   also works. The agent refuses to start with any location other than `us-central1` or `global`,
   because us-west2 returns `FAILED_PRECONDITION` for every Gemini model.
 - **Tools:** our four Python function tools. When `TOOLBOX_URL` is set, it also gets the
-  Toolbox's `grant_toolset` through ADK's `ToolboxToolset`. That connects on first use, so the
-  agent still loads if the Toolbox is down. Without `TOOLBOX_URL`, the instruction gains a rule:
+  Toolbox's `grant_toolset` through ADK's `ToolboxToolset`. The Toolbox is a private Cloud Run
+  service, so the agent calls it with a Google ID token for its own service account
+  (`CredentialStrategy.workload_identity`). It connects on first use, so the agent still loads
+  if the Toolbox is down. Without `TOOLBOX_URL`, the instruction gains a rule:
   lookups are unavailable, so ask for a `business_id` and don't invent name matches, loans or
   tract profiles.
 - **Instruction:** `prompt.py`. It routes questions to tools: "Who should we fund?" goes to

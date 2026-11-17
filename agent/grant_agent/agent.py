@@ -13,9 +13,15 @@ tools = [recommend_grants, get_cascade, exposed_non_applicants, audit_allocation
 # MCP Toolbox (Step 9). Optional so the agent still runs locally before Toolbox is up.
 # ToolboxToolset connects on first use, not at import, so an unreachable Toolbox
 # cannot stop the agent from loading. Needs: pip install "google-adk[toolbox]".
+# The Toolbox is a private Cloud Run service: only this agent's service account may invoke it.
+# workload_identity fetches a Google ID token for TOOLBOX_URL from the metadata server on Cloud
+# Run. Locally (user credentials) that fails on first use; the agent still runs on its own tools.
 if os.getenv("TOOLBOX_URL"):
     from google.adk.tools.toolbox_toolset import ToolboxToolset
-    tools.append(ToolboxToolset(server_url=os.environ["TOOLBOX_URL"], toolset_name="grant_toolset"))
+    from toolbox_adk import CredentialStrategy
+    tools.append(ToolboxToolset(
+        server_url=os.environ["TOOLBOX_URL"], toolset_name="grant_toolset",
+        credentials=CredentialStrategy.workload_identity(target_audience=os.environ["TOOLBOX_URL"])))
 
 instruction = SYSTEM_INSTRUCTION
 if not os.getenv("TOOLBOX_URL"):

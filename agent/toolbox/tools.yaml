@@ -1,7 +1,10 @@
 # MCP Toolbox for Databases config, in Toolbox's flat format (one YAML document per
 # source / tool / toolset; the older nested format still works but gets no new features).
-# Deployed to Cloud Run as the secret "tools". Read-only and limited to the a4i_econ
-# dataset: the agent can only run the SQL below.
+# Deployed to Cloud Run as the secret "tools". Limited to the a4i_econ dataset: the agent can
+# only run the four SELECTs below. Do NOT add `readOnly: true` to the source: the Toolbox then
+# suppresses every bigquery-sql tool ("write-capable tool bound to read-only source"), and the
+# agent gets zero tools. Writes are impossible anyway: the Toolbox's service account (toolbox-sa)
+# has only BigQuery Data Viewer and Job User.
 # The project comes from the PROJECT_ID environment variable on the Cloud Run service (set by
 # the deploy pipeline and by deploy.sh). Tables are written dataset.table, which BigQuery
 # resolves against that same project, so no project ID is stored in this repo.
@@ -10,7 +13,6 @@ name: bq
 type: bigquery
 project: ${PROJECT_ID}
 location: US
-readOnly: true
 allowedDatasets:
   - a4i_econ
 ---
