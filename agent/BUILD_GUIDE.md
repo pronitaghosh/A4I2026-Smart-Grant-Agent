@@ -774,76 +774,36 @@ RULES
 
 ## 9. MCP Toolbox on Cloud Run (Person C, start early)
 
-This satisfies **"consume a Google-managed MCP server."** The Toolbox only runs the SQL you define
-here, so the agent cannot run arbitrary queries.
+This satisfies **"consume a Google-managed MCP server."** The Toolbox only runs the SQL you define,
+so the agent cannot run arbitrary queries.
 
-`agent/toolbox/tools.yaml`. Replace `YOUR_PROJECT_ID`. The Toolbox config format has changed
-between releases, so check it against the README for the version you deploy.
+Two files, both in `agent/toolbox/`:
 
-```yaml
-sources:
-  bq:
-    kind: bigquery
-    project: YOUR_PROJECT_ID
-    location: US
+- **`tools.yaml`**: four read-only lookups (`list_applications`, `find_business`,
+  `loan_history`, `tract_profile`) grouped as the toolset `grant_toolset`. It uses Toolbox's
+  **flat format**: one YAML document per source, tool and toolset, separated by `---`, each with
+  a `type:`. The older nested format (`sources:` and `tools:` maps) still works in v1.x but gets
+  no new features. The source is `readOnly: true` and limited to `a4i_econ`.
+  It holds **no project ID**: the source reads `${PROJECT_ID}`, which the deploy sets as an
+  environment variable on the Cloud Run service, and tables are written `a4i_econ.table`.
+- **`deploy.sh`**: enables the APIs, creates the `toolbox-sa` service account (BigQuery Job
+  User, BigQuery Data Viewer, Secret Accessor), uploads `tools.yaml` as the secret `tools`,
+  deploys the `toolbox` Cloud Run service with `PROJECT_ID` set, `--config=/app/tools.yaml` and
+  `--min-instances=1`, then tries to allow unauthenticated calls. You can safely re-run it after
+  editing `tools.yaml`.
 
-tools:
-  list_applications:
-    kind: bigquery-sql
-    source: bq
-    description: List every grant application with business name, address, amount requested and hardship.
-    statement: |
-      SELECT a.application_id, a.business_id, b.name, b.address, b.naics4,
-             a.requested_amount, a.revenue_drop_pct, a.months_cash_on_hand,
-             a.self_reported_employees, a.hardship_note
-      FROM a4i_econ.applications a JOIN a4i_econ.businesses b USING (business_id)
-      ORDER BY a.application_id
+Run it **in Cloud Shell** (it already has `gcloud`, signed in as your lab account). The project
+comes from `PROJECT_ID` if your pipeline sets it, otherwise from `gcloud config`. The region comes
+from `REGION` if set, otherwise from the region your Cloud Run services already use, otherwise
+`us-west2`:
 
-  find_business:
-    kind: bigquery-sql
-    source: bq
-    description: Find businesses in the corridor whose name contains the search text. Returns business_id.
-    parameters:
-      - name: name_contains
-        type: string
-        description: Part of the business name, case-insensitive.
-    statement: |
-      SELECT business_id, name, address, naics4
-      FROM a4i_econ.businesses
-      WHERE LOWER(name) LIKE CONCAT('%', LOWER(@name_contains), '%')
-      LIMIT 10
-
-  loan_history:
-    kind: bigquery-sql
-    source: bq
-    description: Real SBA 7(a) loans for a business, including whether any were charged off (the business failed to repay).
-    parameters:
-      - name: business_id
-        type: string
-        description: The business_id.
-    statement: |
-      SELECT bank_name, gross_approval, approval_date, loan_status, charged_off
-      FROM a4i_econ.borrowed_from WHERE business_id = @business_id
-
-  tract_profile:
-    kind: bigquery-sql
-    source: bq
-    description: Census tract demographics (poverty, vehicle access, public assistance, median income) for a business's location.
-    parameters:
-      - name: business_id
-        type: string
-        description: The business_id.
-    statement: |
-      SELECT geo_id, poverty_rate, no_vehicle_rate, assistance_rate, median_income
-      FROM a4i_econ.business_tract WHERE business_id = @business_id
-
-toolsets:
-  grant_toolset: [list_applications, find_business, loan_history, tract_profile]
+```bash
+export PROJECT_ID=$(gcloud config get-value project)
+export REGION=$(gcloud run services list --format="value(region)" --limit=1)
+bash agent/toolbox/deploy.sh
 ```
 
-If `borrowed_from` doesn't exist in your corridor, delete `loan_history` from the file.
-
-Deploy:
+**Or by hand**, the same steps as the script:
 
 ```bash
 export PROJECT_ID=$(gcloud config get-value project)
@@ -865,13 +825,22 @@ gcloud run deploy toolbox \
   --region ${REGION} \
   --set-secrets "/app/tools.yaml=tools:latest" \
   --set-env-vars PROJECT_ID=$PROJECT_ID \
-  --args="--tools-file=/app/tools.yaml","--address=0.0.0.0","--port=8080" \
+  --args="--config=/app/tools.yaml","--address=0.0.0.0","--port=8080" \
   --min-instances=1 \
   --allow-unauthenticated   # hackathon shortcut; read-only predefined SQL over public data
 ```
 
-Put the service URL into `TOOLBOX_URL` in `.env`. If the agent can't reach it, check
-`gcloud run services logs read toolbox --region ${REGION}`.
+`--config` replaces `--tools-file`, which Toolbox v1.x deprecates (it still works for now).
+
+Put the service URL into `TOOLBOX_URL` in `agent/grant_agent/.env`.
+
+- **"BLOCKED by organisation policy"** when allowing unauthenticated calls: the lab doesn't allow
+  public services. The Toolbox stays private, so give the agent's service account the **Cloud Run
+  Invoker** role on `toolbox`, and have the agent send an ID token.
+- **The tools fail when called:** the tables they read (`applications` and `business_tract` from
+  Step 3; `borrowed_from` from the data lane) must exist. If your corridor has no
+  `borrowed_from`, delete the `loan_history` document and its line in the toolset, then re-run.
+- **Logs:** `gcloud run services logs read toolbox --region ${REGION}`.
 
 ---
 
