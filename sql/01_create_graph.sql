@@ -4,7 +4,7 @@
 --   DrawsFootfall: employer block -> business
 -- Naming rule (notebook Section 13, trap 1): dataset-qualified, unbackticked table
 -- names in NODE/EDGE TABLES; bare table names in REFERENCES.
-CREATE OR REPLACE PROPERTY GRAPH a4i_econ.econ_graph
+CREATE OR REPLACE PROPERTY GRAPH a4i_econ.LocalEconomy
   NODE TABLES (
     a4i_econ.businesses
       KEY (business_id)
