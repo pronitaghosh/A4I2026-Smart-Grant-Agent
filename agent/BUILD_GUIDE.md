@@ -851,14 +851,16 @@ Put the service URL into `TOOLBOX_URL` in `agent/grant_agent/.env`.
 export TOOLBOX_URL=https://toolbox-xxxx.a.run.app
 
 cd agent
+# --region is where the service runs. GOOGLE_CLOUD_LOCATION is where Gemini is called, and
+# adk deploy sets it to --region unless --env overrides it. Gemini is not available to the lab
+# project in us-west2 (400 FAILED_PRECONDITION), so keep it at us-central1 (or global).
 adk deploy cloud_run \
   --project $PROJECT_ID --region ${REGION} \
   --service_name grant-agent --with_ui \
-  ./grant_agent
-
-# Make sure the runtime has the env vars and minimum instances:
-gcloud run services update grant-agent --region ${REGION} --min-instances=1 \
-  --set-env-vars GOOGLE_GENAI_USE_VERTEXAI=TRUE,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=${REGION},GEMINI_MODEL=gemini-2.5-flash,TOOLBOX_URL=${TOOLBOX_URL}
+  --env GOOGLE_CLOUD_LOCATION=us-central1 \
+  --env GEMINI_MODEL=gemini-2.5-flash \
+  --env TOOLBOX_URL=${TOOLBOX_URL} \
+  ./grant_agent -- --min-instances=1
 ```
 
 The Cloud Run service account needs **BigQuery Job User**, **BigQuery Data Viewer** and **Vertex

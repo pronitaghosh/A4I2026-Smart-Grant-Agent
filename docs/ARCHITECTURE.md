@@ -183,12 +183,17 @@ gcloud run deploy grant-desk --region us-west2 \
 
 ```bash
 cd agent && adk deploy cloud_run --project qwiklabs-gcp-04-524776bdd295 --region us-west2 \
-  --service_name grant-agent --with_ui ./grant_agent
-# Then always restore the settings; a redeploy can reset GOOGLE_CLOUD_LOCATION to us-west2,
-# where Gemini fails:
-gcloud run services update grant-agent --region us-west2 --min-instances 1 \
-  --update-env-vars GOOGLE_CLOUD_LOCATION=us-central1,GEMINI_MODEL=gemini-2.5-flash,TOOLBOX_URL=https://toolbox-173086820802.us-west2.run.app
+  --service_name grant-agent --with_ui \
+  --env GOOGLE_CLOUD_LOCATION=us-central1 \
+  --env GEMINI_MODEL=gemini-2.5-flash \
+  --env TOOLBOX_URL=https://toolbox-173086820802.us-west2.run.app \
+  ./grant_agent -- --min-instances=1
 ```
+
+`--region` is where the service runs; `GOOGLE_CLOUD_LOCATION` is where Gemini is called. Left
+alone, `adk deploy` sets `GOOGLE_CLOUD_LOCATION` to the `--region` value. Gemini 2.5 Flash returns
+`400 FAILED_PRECONDITION` for this project in us-west2, but works in us-central1 and `global`
+(checked 2026-11-17), hence the `--env` override.
 
 **Toolbox.** After editing `agent/toolbox/tools.yaml`, run the deploy script. It reuses the
 service account, uploads `tools.yaml` as a new version of the `tools` secret, and redeploys the
@@ -240,7 +245,7 @@ The table uses the project-number form.
 | Issue | Effect | Status |
 |---|---|---|
 | The allocator funded Tradespace, a healthy hub with 113 weak generic links, first and in full | Contradicted "don't fund the robust hub" | **Fixed.** The weakest-link rule (PR #12) leaves Tradespace one dependent business, and it isn't funded. The applicant swap (PR #13) put three real cascades in the queue. Sour Flour is now grant 1 |
-| A redeploy of the agent may reset its Gemini location to us-west2 | Every question failed with a 500 | Re-run the settings command above after each agent deploy. Since PR #15, the agent refuses to start with a location other than us-central1 or global, so the mistake shows up at deploy time |
+| A redeploy of the agent reset its Gemini location to us-west2 | Every question failed with a 500 | **Root cause found:** `adk deploy` sets `GOOGLE_CLOUD_LOCATION` to `--region` unless overridden. The deploy command above passes `--env GOOGLE_CLOUD_LOCATION=us-central1`. Since PR #15, the agent also refuses to start with a location other than us-central1 or global |
 | Two Toolbox services | Confusion about which one is live | The agent uses us-west2; the us-central1 copy is idle |
 | First load after a desk deploy takes about 9 seconds | A slow first impression | Open the desk once before recording |
 | Each question starts a new agent session | Follow-ups don't remember earlier questions | Acceptable for the demo |
