@@ -6,29 +6,48 @@
  },
  "recommend_grants": {
   "budget": 50000.0,
-  "allocated": 50000.0,
-  "unallocated": 0.0,
-  "expected_closures_avoided_total": 1.463,
+  "allocated": 49500.0,
+  "unallocated": 500.0,
+  "expected_closures_avoided_total": 4.138,
   "recommended": [
    {
-    "business_id": "171",
-    "name": "Tradespace",
-    "address": "1161 Mission St",
-    "requested": 11000.0,
-    "award": 11000.0,
+    "business_id": "16",
+    "name": "Sour Flour",
+    "address": "1182 Market St 415",
+    "requested": 5000.0,
+    "award": 5000.0,
     "pct_of_request": 100,
-    "pct_of_budget": 22.0,
-    "baseline_risk": 0.09,
-    "risk_after_award": 0.05,
-    "downstream_exposed": 194,
-    "closures_avoided_by_this_grant": 0.377,
-    "closures_avoided_per_10k_if_fully_funded": 0.362,
+    "pct_of_budget": 10.0,
+    "baseline_risk": 0.42,
+    "risk_after_award": 0.25,
+    "downstream_exposed": 97,
+    "closures_avoided_by_this_grant": 3.019,
+    "closures_avoided_per_10k_if_fully_funded": 6.042,
     "reasons": [
-     "Baseline closure risk 9%: reports 8% revenue drop, 9 months of cash. (Rent increase at lease renewal; need bridge funding for three months.)",
-     "Supplies 113 businesses directly and 81 more at two hops; strongest chain: Tradespace \u2192 415 Ebikes (link intensities 0.021).",
+     "Baseline closure risk 42%: reports 16% revenue drop, 1 months of cash. (Lost a major customer; payroll at risk next month.)",
+     "Supplies 69 businesses directly and 28 more at two hops; strongest chain: Sour Flour \u2192 The Function (link intensities 0.096).",
      "0 other local business(es) in the same industry: no local substitute, so the full cascade counts.",
-     "Tract poverty 22% vs corridor average 21%.",
-     "Well connected but financially robust: money changes its odds little. This is why the hub is not funded first."
+     "Tract poverty 18% vs corridor average 21%."
+    ]
+   },
+   {
+    "business_id": "135",
+    "name": "Honeybee Foods Corporation Dba Jollibee",
+    "address": "934 Market St",
+    "requested": 9000.0,
+    "award": 9000.0,
+    "pct_of_request": 100,
+    "pct_of_budget": 18.0,
+    "baseline_risk": 0.54,
+    "risk_after_award": 0.33,
+    "downstream_exposed": 1,
+    "closures_avoided_by_this_grant": 0.229,
+    "closures_avoided_per_10k_if_fully_funded": 0.256,
+    "reasons": [
+     "Baseline closure risk 54%: reports 52% revenue drop, 2 months of cash. (Rent increase at lease renewal; need bridge funding for three months.)",
+     "Supplies 1 businesses directly and 0 more at two hops; strongest chain: Honeybee Foods Corporation Dba Jollibee \u2192 Warfield Hotel Inc (link intensities 0.036).",
+     "28 other local business(es) in the same industry: buyers could switch, so the cascade is discounted.",
+     "Tract poverty 24% vs corridor average 21%."
     ]
    },
    {
@@ -52,37 +71,17 @@
     ]
    },
    {
-    "business_id": "135",
-    "name": "Honeybee Foods Corporation Dba Jollibee",
-    "address": "934 Market St",
-    "requested": 9000.0,
-    "award": 6000.0,
-    "pct_of_request": 67,
-    "pct_of_budget": 12.0,
-    "baseline_risk": 0.54,
-    "risk_after_award": 0.37,
-    "downstream_exposed": 10,
-    "closures_avoided_by_this_grant": 0.187,
-    "closures_avoided_per_10k_if_fully_funded": 0.258,
-    "reasons": [
-     "Baseline closure risk 54%: reports 52% revenue drop, 2 months of cash. (Rent increase at lease renewal; need bridge funding for three months.)",
-     "Supplies 2 businesses directly and 8 more at two hops; strongest chain: Honeybee Foods Corporation Dba Jollibee \u2192 Warfield Hotel Inc (link intensities 0.036).",
-     "28 other local business(es) in the same industry: buyers could switch, so the cascade is discounted.",
-     "Tract poverty 24% vs corridor average 21%."
-    ]
-   },
-   {
     "business_id": "73",
     "name": "Eddy St Bodega Inc",
     "address": "200 Eddy St",
     "requested": 11000.0,
-    "award": 6000.0,
-    "pct_of_request": 55,
-    "pct_of_budget": 12.0,
+    "award": 9000.0,
+    "pct_of_request": 82,
+    "pct_of_budget": 18.0,
     "baseline_risk": 0.41,
-    "risk_after_award": 0.29,
+    "risk_after_award": 0.26,
     "downstream_exposed": 0,
-    "closures_avoided_by_this_grant": 0.164,
+    "closures_avoided_by_this_grant": 0.2,
     "closures_avoided_per_10k_if_fully_funded": 0.201,
     "reasons": [
      "Baseline closure risk 41%: reports 26% revenue drop, 2 months of cash. (Lost a major customer; payroll at risk next month.)",
@@ -95,13 +94,13 @@
     "name": "San Francisco Proper Hotel - Villon",
     "address": "1100 Market St",
     "requested": 11000.0,
-    "award": 3000.0,
-    "pct_of_request": 27,
-    "pct_of_budget": 6.0,
+    "award": 6000.0,
+    "pct_of_request": 55,
+    "pct_of_budget": 12.0,
     "baseline_risk": 0.49,
-    "risk_after_award": 0.39,
+    "risk_after_award": 0.35,
     "downstream_exposed": 0,
-    "closures_avoided_by_this_grant": 0.109,
+    "closures_avoided_by_this_grant": 0.154,
     "closures_avoided_per_10k_if_fully_funded": 0.189,
     "reasons": [
      "Baseline closure risk 49%: reports 42% revenue drop, 2 months of cash. (Equipment failure; repair cost exceeds cash reserves.)",
@@ -110,22 +109,22 @@
     ]
    },
    {
-    "business_id": "1",
-    "name": "Hound Technology, Inc/Honeycomb",
-    "address": "944 Market St Fl 6",
-    "requested": 12000.0,
-    "award": 3000.0,
-    "pct_of_request": 25,
-    "pct_of_budget": 6.0,
-    "baseline_risk": 0.43,
-    "risk_after_award": 0.34,
-    "downstream_exposed": 45,
-    "closures_avoided_by_this_grant": 0.092,
-    "closures_avoided_per_10k_if_fully_funded": 0.161,
+    "business_id": "114",
+    "name": "The Warfield Theater",
+    "address": "982 Market St",
+    "requested": 15000.0,
+    "award": 4000.0,
+    "pct_of_request": 27,
+    "pct_of_budget": 8.0,
+    "baseline_risk": 0.35,
+    "risk_after_award": 0.28,
+    "downstream_exposed": 7,
+    "closures_avoided_by_this_grant": 0.094,
+    "closures_avoided_per_10k_if_fully_funded": 0.146,
     "reasons": [
-     "Baseline closure risk 43%: reports 41% revenue drop, 3 months of cash. (Rent increase at lease renewal; need bridge funding for three months.)",
-     "Supplies 8 businesses directly and 37 more at two hops; strongest chain: Hound Technology, Inc/Honeycomb \u2192 West Coast Realties (link intensities 0.012).",
-     "9 other local business(es) in the same industry: buyers could switch, so the cascade is discounted.",
+     "Baseline closure risk 35%: reports 36% revenue drop, 4 months of cash. (Equipment failure; repair cost exceeds cash reserves.)",
+     "Supplies 5 businesses directly and 2 more at two hops; strongest chain: The Warfield Theater \u2192 200 Channels LLC (link intensities 0.129).",
+     "2 other local business(es) in the same industry: buyers could switch, so the cascade is discounted.",
      "Tract poverty 24% vs corridor average 21%."
     ]
    },
@@ -149,26 +148,6 @@
     ]
    },
    {
-    "business_id": "43",
-    "name": "Wpengine, Inc.",
-    "address": "1161 Mission Street",
-    "requested": 14000.0,
-    "award": 3500.0,
-    "pct_of_request": 25,
-    "pct_of_budget": 7.0,
-    "baseline_risk": 0.39,
-    "risk_after_award": 0.31,
-    "downstream_exposed": 123,
-    "closures_avoided_by_this_grant": 0.079,
-    "closures_avoided_per_10k_if_fully_funded": 0.135,
-    "reasons": [
-     "Baseline closure risk 39%: reports 21% revenue drop, 2 months of cash. (Lost a major customer; payroll at risk next month.)",
-     "Supplies 5 businesses directly and 118 more at two hops; strongest chain: Wpengine, Inc. \u2192 Tradespace (link intensities 0.020).",
-     "9 other local business(es) in the same industry: buyers could switch, so the cascade is discounted.",
-     "Tract poverty 22% vs corridor average 21%."
-    ]
-   },
-   {
     "business_id": "185",
     "name": "Soliome Inc",
     "address": "479 Jessie St",
@@ -188,22 +167,22 @@
     ]
    },
    {
-    "business_id": "7",
-    "name": "North Beach Parking Services, Inc",
-    "address": "1270 Mission St",
-    "requested": 11000.0,
-    "award": 3000.0,
-    "pct_of_request": 27,
-    "pct_of_budget": 6.0,
-    "baseline_risk": 0.32,
-    "risk_after_award": 0.25,
-    "downstream_exposed": 30,
-    "closures_avoided_by_this_grant": 0.067,
-    "closures_avoided_per_10k_if_fully_funded": 0.119,
+    "business_id": "66",
+    "name": "Non Plus Ultra",
+    "address": "88 5th St",
+    "requested": 8000.0,
+    "award": 2000.0,
+    "pct_of_request": 25,
+    "pct_of_budget": 4.0,
+    "baseline_risk": 0.25,
+    "risk_after_award": 0.2,
+    "downstream_exposed": 6,
+    "closures_avoided_by_this_grant": 0.053,
+    "closures_avoided_per_10k_if_fully_funded": 0.18,
     "reasons": [
-     "Baseline closure risk 32%: reports 19% revenue drop, 3 months of cash. (Lost a major customer; payroll at risk next month.)",
-     "Supplies 3 businesses directly and 27 more at two hops; strongest chain: North Beach Parking Services, Inc \u2192 Street Taco (link intensities 0.011).",
-     "16 other local business(es) in the same industry: buyers could switch, so the cascade is discounted.",
+     "Baseline closure risk 25%: reports 29% revenue drop, 5 months of cash. (Rent increase at lease renewal; need bridge funding for three months.)",
+     "Supplies 4 businesses directly and 2 more at two hops; strongest chain: Non Plus Ultra \u2192 Golden Gate Theatre (link intensities 0.129).",
+     "2 other local business(es) in the same industry: buyers could switch, so the cascade is discounted.",
      "Tract poverty 22% vs corridor average 21%."
     ]
    }
@@ -226,6 +205,26 @@
      "Baseline closure risk 17%: reports 12% revenue drop, 5 months of cash. (Rent increase at lease renewal; need bridge funding for three months.)",
      "Supplies 1 businesses directly and 0 more at two hops; strongest chain: Supremo Pizza Inc \u2192 Oak Tree Hotel (link intensities 0.036).",
      "28 other local business(es) in the same industry: buyers could switch, so the cascade is discounted.",
+     "Tract poverty 22% vs corridor average 21%."
+    ]
+   },
+   {
+    "business_id": "171",
+    "name": "Tradespace",
+    "address": "1161 Mission St",
+    "requested": 11000.0,
+    "award": 0.0,
+    "pct_of_request": 0,
+    "pct_of_budget": 0.0,
+    "baseline_risk": 0.09,
+    "risk_after_award": 0.09,
+    "downstream_exposed": 1,
+    "closures_avoided_by_this_grant": 0.0,
+    "closures_avoided_per_10k_if_fully_funded": 0.036,
+    "reasons": [
+     "Baseline closure risk 9%: reports 8% revenue drop, 9 months of cash. (Rent increase at lease renewal; need bridge funding for three months.)",
+     "Supplies 1 businesses directly and 0 more at two hops; strongest chain: Tradespace \u2192 415 Ebikes (link intensities 0.021).",
+     "0 other local business(es) in the same industry: no local substitute, so the full cascade counts.",
      "Tract poverty 22% vs corridor average 21%."
     ]
    }
@@ -251,22 +250,22 @@
    ]
   },
   "weakest_funded": {
-   "business_id": "7",
-   "name": "North Beach Parking Services, Inc",
-   "address": "1270 Mission St",
-   "requested": 11000.0,
-   "award": 3000.0,
-   "pct_of_request": 27,
-   "pct_of_budget": 6.0,
-   "baseline_risk": 0.32,
-   "risk_after_award": 0.25,
-   "downstream_exposed": 30,
-   "closures_avoided_by_this_grant": 0.067,
-   "closures_avoided_per_10k_if_fully_funded": 0.119,
+   "business_id": "66",
+   "name": "Non Plus Ultra",
+   "address": "88 5th St",
+   "requested": 8000.0,
+   "award": 2000.0,
+   "pct_of_request": 25,
+   "pct_of_budget": 4.0,
+   "baseline_risk": 0.25,
+   "risk_after_award": 0.2,
+   "downstream_exposed": 6,
+   "closures_avoided_by_this_grant": 0.053,
+   "closures_avoided_per_10k_if_fully_funded": 0.18,
    "reasons": [
-    "Baseline closure risk 32%: reports 19% revenue drop, 3 months of cash. (Lost a major customer; payroll at risk next month.)",
-    "Supplies 3 businesses directly and 27 more at two hops; strongest chain: North Beach Parking Services, Inc \u2192 Street Taco (link intensities 0.011).",
-    "16 other local business(es) in the same industry: buyers could switch, so the cascade is discounted.",
+    "Baseline closure risk 25%: reports 29% revenue drop, 5 months of cash. (Rent increase at lease renewal; need bridge funding for three months.)",
+    "Supplies 4 businesses directly and 2 more at two hops; strongest chain: Non Plus Ultra \u2192 Golden Gate Theatre (link intensities 0.129).",
+    "2 other local business(es) in the same industry: buyers could switch, so the cascade is discounted.",
     "Tract poverty 22% vs corridor average 21%."
    ]
   },
@@ -283,67 +282,66 @@
   "sensitivity": {
    "funded_ids_by_scenario": {
     "weak_contagion (0.10)": [
-     "1",
      "106",
+     "114",
      "135",
-     "171",
+     "16",
      "185",
      "211",
-     "43",
-     "7",
+     "66",
      "73",
      "92"
     ],
     "strong_contagion (0.50)": [
-     "1",
      "106",
+     "114",
      "135",
-     "171",
+     "16",
      "185",
      "211",
-     "43",
-     "7",
+     "66",
      "73",
      "92"
     ],
     "linear_effect (split less)": [
      "106",
      "135",
-     "171",
+     "16",
      "211",
+     "66",
      "73"
     ],
     "steep_diminishing (split more)": [
-     "1",
      "106",
+     "114",
      "135",
-     "171",
+     "16",
      "185",
      "211",
-     "43",
-     "7",
+     "66",
      "73",
      "85",
      "92"
     ],
     "ignore_need": [
-     "1",
      "106",
+     "114",
      "135",
-     "171",
+     "16",
      "185",
      "211",
-     "43",
-     "7",
+     "66",
      "73",
+     "85",
      "92"
     ]
    },
    "funded_in_every_scenario": [
     "106",
     "135",
-    "171",
+    "16",
     "211",
+    "66",
     "73"
    ],
    "note": "MAX_RISK_REDUCTION scales every grant equally, so it changes HOW MANY closures are avoided, not WHO is funded. The other assumptions can change who."
@@ -352,42 +350,37 @@
   "evidence_note": "Businesses, addresses, industries, SBA loans and tract demographics are real. Supply links are MODELED: the industry-to-industry purchase rates are published by the U.S. Bureau of Economic Analysis, but which specific business buys from which is our assignment (industry match + walking distance). Applicant financials are illustrative."
  },
  "neighborhood": {
-  "1": {
+  "211": {
    "geo_id": "06075012501",
    "poverty_rate": 0.2386039886039886,
    "no_vehicle_rate": 0.858021978021978
   },
-  "135": {
-   "geo_id": "06075012501",
-   "poverty_rate": 0.2386039886039886,
-   "no_vehicle_rate": 0.858021978021978
+  "92": {
+   "geo_id": "06075017601",
+   "poverty_rate": 0.21599149183022334,
+   "no_vehicle_rate": 0.7313735428281805
   },
   "85": {
    "geo_id": "06075017601",
    "poverty_rate": 0.21599149183022334,
    "no_vehicle_rate": 0.7313735428281805
   },
-  "211": {
-   "geo_id": "06075012501",
-   "poverty_rate": 0.2386039886039886,
-   "no_vehicle_rate": 0.858021978021978
+  "66": {
+   "geo_id": "06075017601",
+   "poverty_rate": 0.21599149183022334,
+   "no_vehicle_rate": 0.7313735428281805
   },
   "185": {
    "geo_id": "06075017601",
    "poverty_rate": 0.21599149183022334,
    "no_vehicle_rate": 0.7313735428281805
   },
-  "43": {
-   "geo_id": "06075017601",
-   "poverty_rate": 0.21599149183022334,
-   "no_vehicle_rate": 0.7313735428281805
+  "114": {
+   "geo_id": "06075012501",
+   "poverty_rate": 0.2386039886039886,
+   "no_vehicle_rate": 0.858021978021978
   },
   "106": {
-   "geo_id": "06075017601",
-   "poverty_rate": 0.21599149183022334,
-   "no_vehicle_rate": 0.7313735428281805
-  },
-  "7": {
    "geo_id": "06075017601",
    "poverty_rate": 0.21599149183022334,
    "no_vehicle_rate": 0.7313735428281805
@@ -397,15 +390,20 @@
    "poverty_rate": 0.36096027436410405,
    "no_vehicle_rate": 0.8820921985815603
   },
+  "135": {
+   "geo_id": "06075012501",
+   "poverty_rate": 0.2386039886039886,
+   "no_vehicle_rate": 0.858021978021978
+  },
   "171": {
    "geo_id": "06075017601",
    "poverty_rate": 0.21599149183022334,
    "no_vehicle_rate": 0.7313735428281805
   },
-  "92": {
-   "geo_id": "06075017601",
-   "poverty_rate": 0.21599149183022334,
-   "no_vehicle_rate": 0.7313735428281805
+  "16": {
+   "geo_id": "06075012402",
+   "poverty_rate": 0.18315354601790224,
+   "no_vehicle_rate": 0.7317243791535502
   }
  }
 }
