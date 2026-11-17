@@ -2,7 +2,8 @@
 
 How the system is built and deployed, as of 2026-11-17, in Google Cloud project
 `qwiklabs-gcp-04-524776bdd295`. For what each table holds and how it was validated, see
-[TEAM_NOTES.md](TEAM_NOTES.md) and [`sql/README.md`](../sql/README.md).
+[TEAM_NOTES.md](TEAM_NOTES.md) and [`sql/README.md`](../sql/README.md). For the product
+requirements, goals and decisions, see [PRD.pdf](PRD.pdf).
 
 ## At a glance
 
