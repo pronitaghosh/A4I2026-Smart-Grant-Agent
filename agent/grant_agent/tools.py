@@ -10,10 +10,9 @@ from google.cloud import bigquery
 
 from . import allocator
 
-PROJECT = os.environ["GOOGLE_CLOUD_PROJECT"]
+PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT", "")
 DS = f"{PROJECT}.a4i_econ"
 GRAPH = "a4i_econ.LocalEconomy"
-_bq = bigquery.Client(project=PROJECT, location="US")
 _SAFE_ID = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
 
 MODELED_NOTE = (
@@ -24,8 +23,17 @@ MODELED_NOTE = (
 )
 
 
+@lru_cache(maxsize=1)
+def _client() -> bigquery.Client:
+    """Created on first use, not at import, so the package (and the allocator tests)
+    load without credentials."""
+    if not PROJECT or PROJECT == "your-project-id":
+        raise RuntimeError("Set GOOGLE_CLOUD_PROJECT in grant_agent/.env to your team project.")
+    return bigquery.Client(project=PROJECT, location="US")
+
+
 def _rows(sql: str) -> list[dict]:
-    return [dict(r) for r in _bq.query(sql).result()]
+    return [dict(r) for r in _client().query(sql).result()]
 
 
 def _parse_path(pj) -> tuple[list[dict], list[float]]:

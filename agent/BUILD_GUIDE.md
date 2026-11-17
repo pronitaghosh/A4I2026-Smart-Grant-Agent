@@ -200,7 +200,7 @@ In Cloud Shell, from the repo root:
 ```bash
 cd agent
 python3 -m venv .venv && source .venv/bin/activate
-pip install google-adk google-cloud-bigquery toolbox-core pytest
+pip install "google-adk[toolbox]" google-cloud-bigquery toolbox-core pytest
 mkdir grant_agent && cd grant_agent
 touch __init__.py agent.py tools.py allocator.py prompt.py
 ```
@@ -238,7 +238,7 @@ TOOLBOX_URL=https://toolbox-xxxx.a.run.app   # filled in after Step 9
 `grant_agent/requirements.txt`:
 
 ```
-google-adk
+google-adk[toolbox]
 google-cloud-bigquery
 toolbox-core
 ```
@@ -268,10 +268,9 @@ from google.cloud import bigquery
 
 from . import allocator
 
-PROJECT = os.environ["GOOGLE_CLOUD_PROJECT"]
+PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT", "")
 DS = f"{PROJECT}.a4i_econ"
 GRAPH = "a4i_econ.LocalEconomy"
-_bq = bigquery.Client(project=PROJECT, location="US")
 _SAFE_ID = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
 
 MODELED_NOTE = (
@@ -282,8 +281,17 @@ MODELED_NOTE = (
 )
 
 
+@lru_cache(maxsize=1)
+def _client() -> bigquery.Client:
+    """Created on first use, not at import, so the package (and the allocator tests)
+    load without credentials."""
+    if not PROJECT or PROJECT == "your-project-id":
+        raise RuntimeError("Set GOOGLE_CLOUD_PROJECT in grant_agent/.env to your team project.")
+    return bigquery.Client(project=PROJECT, location="US")
+
+
 def _rows(sql: str) -> list[dict]:
-    return [dict(r) for r in _bq.query(sql).result()]
+    return [dict(r) for r in _client().query(sql).result()]
 
 
 def _parse_path(pj) -> tuple[list[dict], list[float]]:
@@ -679,14 +687,12 @@ from .tools import get_cascade, recommend_grants, exposed_non_applicants
 
 tools = [recommend_grants, get_cascade, exposed_non_applicants]
 
-# MCP Toolbox (Step 9). Kept optional so the agent still runs locally before Toolbox is up.
+# MCP Toolbox (Step 9). Optional so the agent still runs locally before Toolbox is up.
+# ToolboxToolset connects on first use, not at import, so an unreachable Toolbox
+# cannot stop the agent from loading. Needs: pip install "google-adk[toolbox]".
 if os.getenv("TOOLBOX_URL"):
-    try:
-        from google.adk.tools.toolbox_toolset import ToolboxToolset
-        tools.append(ToolboxToolset(server_url=os.environ["TOOLBOX_URL"], toolset_name="grant_toolset"))
-    except ImportError:
-        from toolbox_core import ToolboxSyncClient
-        tools.extend(ToolboxSyncClient(os.environ["TOOLBOX_URL"]).load_toolset("grant_toolset"))
+    from google.adk.tools.toolbox_toolset import ToolboxToolset
+    tools.append(ToolboxToolset(server_url=os.environ["TOOLBOX_URL"], toolset_name="grant_toolset"))
 
 root_agent = Agent(
     name="grant_agent",
