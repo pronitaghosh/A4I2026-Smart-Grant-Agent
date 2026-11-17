@@ -741,8 +741,9 @@ Return, in this order:
 1. A table: Business | Address | Award $ | % of request | Closures avoided (expected) | One-line reason.
 2. For each funded business, 2-4 bullet reasons taken from the tool's `reasons`, including the
    strongest cascade path written as A → B → C with hop count and link strength.
-3. Runner-up: who just missed, and the specific number that separates them from the weakest
-   funded applicant.
+3. Runner-up (the tool's runner_up): if anyone was left unfunded, it is who just missed; say the
+   specific number that separates them from the weakest funded applicant. If every applicant got
+   something, runner_up is the grant closest to being cut; say that, and do not call it unfunded.
 4. "What we are assuming": list the assumptions in plain English (e.g. "full funding cuts an
    applicant's closure risk by 40%"), and which awards survive the sensitivity check
    (funded_in_every_scenario) versus which depend on the assumptions.
