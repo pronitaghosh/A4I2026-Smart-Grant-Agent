@@ -45,6 +45,8 @@ an audit that came back clean."*
 
 ## Step 1: Expose the value split in `allocator.py` (5 min)
 
+**Status: built** (commit `1498afa`, PR #17).
+
 The audit needs to know how much of each award's value is the applicant's own survival and how
 much is the modeled cascade. Add this function above `recommend()`:
 
@@ -63,6 +65,7 @@ Then in `recommend()`, inside the `for a in apps:` loop, compute it and add two 
 Replace:
 
 ```python
+        priority_solo = portfolio_value([a], {a.business_id: a.requested}, corridor_poverty, A)
         rows.append({
             "business_id": a.business_id, "name": a.name, "address": a.address,
 ```
@@ -70,11 +73,20 @@ Replace:
 with:
 
 ```python
-        own_v, casc_v = value_split(a, aw, corridor_poverty, A)
+        priority_solo = portfolio_value([a], {a.business_id: a.requested}, corridor_poverty, A)
+        # Unweighted (raw), like the closures reported above; the audit uses the own/cascade ratio.
+        own_v, casc_v = value_split(a, aw, corridor_poverty, raw)
         rows.append({
             "business_id": a.business_id, "name": a.name, "address": a.address,
             "own_value": round(own_v, 4), "cascade_value": round(casc_v, 4),
 ```
+
+**Why `raw`, not `A`:** since the review fixes, `recommend()` reports closures avoided
+**unweighted** (`raw`, with `NEED_WEIGHT` at 0) and keeps the need-weighted figure separately as
+`priority` for ranking. Passing `raw` puts `own_value` and `cascade_value` in the same units as
+`closures_avoided_by_this_grant`, so the two add up to it for each grant. The audit only uses the
+**cascade share**, `cascade_value / (own_value + cascade_value)`, and the need multiplier cancels
+out of that ratio, so audit results are the same either way.
 
 Run `python -m pytest tests` (from `agent/`). The existing tests must still pass.
 
@@ -446,12 +458,22 @@ def test_small_input_heavy_sector_is_still_caught():
     assert mfg["corridor_share"] < 0.05 and mfg["flag"] == "over" and mfg["edge_generator_bias"]
     assert res["edge_generator_bias"]["sectors"] == ["Manufacturing"]
 
+def test_skew_that_follows_the_applicant_pool_is_not_called_bias():
+    # Food is over-represented against the corridor and its money is mostly cascade value, but it
+    # gets less money than its share of applicants: the allocator did not amplify it, so the skew
+    # comes from who applied, not from the edge generator.
+    funded = [row("r0", 3000), row("r1", 2000), row("p0", 2000, casc=0.0)]
+    res = audit(funded, NAICS, ["r0", "r1", "r2", "p0"], TRACT)
+    assert food(res)["flag"] == "over" and not food(res)["edge_generator_bias"]
+    assert food(res)["likely_cause"].startswith("the applicant pool")
+    assert res["edge_generator_bias"]["shows"] is False
+
 def test_caveats_say_the_applicants_are_a_chosen_scenario():
     res = audit([row("r0", 5000)], NAICS, ["r0"], TRACT)
-    assert any("scenario the team chose" in c for c in res["caveats"])
+    assert any("scenario the team chose" in c and "not real demand" in c for c in res["caveats"])
 ```
 
-Run: `cd agent && python -m pytest tests`. The allocator tests and the 6 new audit tests must pass.
+Run: `cd agent && python -m pytest tests`. The allocator tests and the 7 new audit tests must pass.
 
 ---
 
@@ -519,12 +541,23 @@ def audit(budget: float = 50000) -> dict:
         # Never pair a live plan with a sample audit: they would describe different plans.
         if not hasattr(agent_tools, "audit_allocation"):
             raise HTTPException(404, "The agent's audit_allocation tool isn't merged yet.")
-        return {"source": "live", **_live_audit(budget)}
+        try:
+            return {"source": "live", **_live_audit(budget)}
+        except HTTPException:
+            raise
+        except Exception as exc:  # same contract as /api/recommendation: a 503, not a stack trace
+            logging.getLogger(__name__).exception("Live equity audit failed")
+            raise HTTPException(503, "Live data is unavailable; retry or use saved sample mode.") from exc
     if not (SAMPLE / "audit_allocation.json").exists():
         raise HTTPException(404, "No equity audit sample captured yet (see Step 10).")
     s = _sample("audit_allocation")
+    if budget != s["audit_allocation"]["plan"]["budget"]:
+        raise HTTPException(422, "This saved sample supports only its captured $50,000 budget.")
     return {"source": "sample", "captured": s["meta"]["captured"], **s["audit_allocation"]}
 ```
+
+It follows the desk's rules for `/api/recommendation`: a live failure is a 503 with a short message
+(the details go to the log), and sample mode refuses a budget the sample wasn't captured for (422).
 
 Raise the sample cache, since there are now three sample files. Replace:
 
@@ -544,6 +577,9 @@ def _sample(name: str) -> dict:
 calls compute the plan once and the audit describes exactly the plan on screen.
 
 ## Step 9: Fix local live mode in `frontend/app.py` (2 min)
+
+**Status: already done on `main`** by the review fixes (`f23bc85`): `app.py` now sets
+`agent_tools._client = lambda: _bq`. Skip this step; it is kept below for the record.
 
 The desk's local-development path injects a token-based BigQuery client with
 `agent_tools._bq = _bq`. Since BUILD_GUIDE Step 7, `tools.py` creates its client on first use

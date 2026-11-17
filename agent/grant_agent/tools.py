@@ -1,5 +1,6 @@
 """BigQuery-facing tools. Every function the agent can call has a docstring:
 ADK sends it to Gemini as the tool description, so write it for the model."""
+import copy
 import json
 import os
 import re
@@ -9,6 +10,7 @@ from google.api_core.exceptions import NotFound
 from google.cloud import bigquery
 
 from . import allocator
+from . import audit as equity
 
 PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT", "")
 DS = f"{PROJECT}.a4i_econ"
@@ -134,7 +136,7 @@ def get_cascade(business_id: str, depth: int = 2) -> dict:
     }
 
 
-def recommend_grants(budget: float = 50000, depth: int = 2) -> dict:
+def _compute_plan(budget: float = 50000, depth: int = 2) -> dict:
     """Recommend which applicants to fund and how much, from the applications queue.
     Combines each applicant's closure risk, the downstream cascade it protects (multi-hop
     graph traversal), how replaceable it is locally, and tract need, then allocates the
@@ -179,6 +181,24 @@ def recommend_grants(budget: float = 50000, depth: int = 2) -> dict:
     return result
 
 
+@lru_cache(maxsize=8)
+def _cached_plan(budget: float, depth: int) -> dict:
+    return _compute_plan(budget, depth)
+
+
+def recommend_grants(budget: float = 50000, depth: int = 2) -> dict:
+    """Recommend which applicants to fund and how much, from the applications queue.
+    Combines each applicant's closure risk, the downstream cascade it protects (multi-hop
+    graph traversal), how replaceable it is locally, and tract need, then allocates the
+    budget to maximise expected business closures avoided. Also returns the runner-up,
+    every assumption, and a sensitivity check showing which awards survive if the
+    assumptions are wrong. Use this for "who should we fund?" and "what does $X change?"."""
+    plan = _cached_plan(float(budget), int(depth))
+    if "error" in plan:
+        _cached_plan.cache_clear()  # don't keep a failure around
+    return copy.deepcopy(plan)      # callers can't alter the cached plan
+
+
 def exposed_non_applicants(depth: int = 2) -> dict:
     """Businesses that sit downstream of applicants in the supply graph but did NOT apply,
     with any real SBA charge-off history. Use when the officer asks who else is at risk
@@ -198,3 +218,29 @@ def exposed_non_applicants(depth: int = 2) -> dict:
             e["prior_sba_charge_off"] = x in charged
     ranked = sorted(reach.values(), key=lambda e: (-len(e["exposed_via"]), -e["max_weight"]))
     return {"count": len(ranked), "businesses": ranked[:15], "evidence_note": MODELED_NOTE}
+
+
+def audit_allocation(budget: float = 50000, depth: int = 2) -> dict:
+    """Equity audit of the funding plan recommend_grants makes for this budget. Checks whether
+    any industry gets far more or less than its share of the money (our modeled supply links
+    favour input-heavy industries like food service), whether the money lands in poorer tracts
+    than average, and how many awards rest mainly on modeled supply links. Use when the officer
+    asks "is this fair?", "who does this leave out?", or "is there bias in this?", and for the
+    memo's equity lines (memo_lines) after a recommendation. Uses industry, poverty and car
+    access only, never race. Reuses the cached plan, so it adds little time."""
+    plan = recommend_grants(budget, depth)
+    if "error" in plan:
+        return plan
+    biz = _rows(f"""
+      SELECT b.business_id, b.naics4, t.poverty_rate, t.no_vehicle_rate
+      FROM `{DS}.businesses` b
+      LEFT JOIN `{DS}.business_tract` t USING (business_id)""")
+    result = equity.audit(
+        funded=plan["recommended"],
+        naics_by_id={r["business_id"]: r["naics4"] for r in biz},
+        applicant_ids=[r["business_id"] for r in plan["recommended"] + plan["not_funded"]],
+        tract_by_id={r["business_id"]: r for r in biz},
+    )
+    result["plan"] = {"budget": plan["budget"], "allocated": plan["allocated"],
+                      "funded": [{"name": r["name"], "award": r["award"]} for r in plan["recommended"]]}
+    return result
