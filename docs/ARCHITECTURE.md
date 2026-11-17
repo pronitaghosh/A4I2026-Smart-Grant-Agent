@@ -190,8 +190,14 @@ gcloud run services update grant-agent --region us-west2 --min-instances 1 \
   --update-env-vars GOOGLE_CLOUD_LOCATION=us-central1,GEMINI_MODEL=gemini-2.5-flash,TOOLBOX_URL=https://toolbox-173086820802.us-west2.run.app
 ```
 
-**Toolbox.** After editing `agent/toolbox/tools.yaml`, upload it as a new version of the `tools`
-secret and redeploy the `toolbox` service (build guide, step 9).
+**Toolbox.** After editing `agent/toolbox/tools.yaml`, run the deploy script. It reuses the
+service account, uploads `tools.yaml` as a new version of the `tools` secret, and redeploys the
+service. Its `REGION` defaults to us-central1, which would update the idle spare, so set it to
+the region the agent uses:
+
+```bash
+REGION=us-west2 bash agent/toolbox/deploy.sh
+```
 
 **Data.** Run the files in `sql/` in order; each replaces what it creates.
 
@@ -216,7 +222,8 @@ The table uses the project-number form.
 ## Security and access
 
 - **Read-only data access.** The Toolbox can only run the four parameterized `SELECT`s in
-  `tools.yaml`. The Python tools build their SQL from IDs checked against
+  `tools.yaml`, and its BigQuery source is set to `readOnly: true`, limited to the `a4i_econ`
+  dataset. The Python tools build their SQL from IDs checked against
   `^[A-Za-z0-9._-]{1,64}$`, and from the clamped depth.
 - **Model output is sanitized.** The desk renders the agent's Markdown through DOMPurify.
 - **Open endpoints.** The desk calls the agent, and the agent calls the Toolbox, without identity

@@ -15,10 +15,12 @@ https://grant-agent-173086820802.us-west2.run.app. The grant desk (`frontend/`) 
 | [`grant_agent/tools.py`](grant_agent/tools.py) | The three Python tools, and the multi-hop graph traversal behind them |
 | [`grant_agent/allocator.py`](grant_agent/allocator.py) | The judgment layer: closure risk, path weights, allocation, sensitivity. Pure Python, no BigQuery |
 | [`grant_agent/requirements.txt`](grant_agent/requirements.txt) | `google-adk[toolbox]`, `google-cloud-bigquery`, `toolbox-core` |
-| [`toolbox/tools.yaml`](toolbox/tools.yaml) | MCP Toolbox for Databases config: four read-only, parameterized SQL tools |
+| [`toolbox/tools.yaml`](toolbox/tools.yaml) | MCP Toolbox for Databases config: four parameterized SQL tools, with the source set to `readOnly` and limited to the `a4i_econ` dataset |
+| [`toolbox/deploy.sh`](toolbox/deploy.sh) | Deploys the Toolbox to Cloud Run: service account, `tools` secret, service. Safe to re-run |
 | [`tests/test_allocator.py`](tests/test_allocator.py) | Allocator unit tests |
 | [`grant_tools/`](grant_tools/) | A reference cascade query and memo-reason writer. Tested, but not called by the agent |
 | [`BUILD_GUIDE.md`](BUILD_GUIDE.md) | The step-by-step guide this package was built from, with the officer questions to test against |
+| [`EQUITY_AUDIT_BUILD.md`](EQUITY_AUDIT_BUILD.md) | Build plan for an equity-audit tool (agent tool, desk panel, story handoff). Planned, not built yet; the current audit numbers are in [TEAM_NOTES.md](../docs/TEAM_NOTES.md#equity-audit-for-the-deck) |
 
 ## The agent
 

@@ -242,8 +242,10 @@ agent/
     requirements.txt        google-adk[toolbox], google-cloud-bigquery, toolbox-core
   grant_tools/            Reference cascade query with NODES(p) paths and a weakest-link rule (tested; not called in production)
   toolbox/tools.yaml      MCP Toolbox config: 4 read-only, parameterized BigQuery tools
+  toolbox/deploy.sh       Deploys the Toolbox to Cloud Run (service account, secret, service)
   tests/test_allocator.py Unit tests, including the "don't fund the robust hub" cases
   BUILD_GUIDE.md          The agent lane's step-by-step build guide
+  EQUITY_AUDIT_BUILD.md   Build plan for an equity-audit agent tool and desk panel (planned)
   README.md               How to run, test and deploy the agent
 frontend/                 The grant desk (deployed as grant-desk)
   app.py                    FastAPI backend: /api/recommendation, /api/cascade/{id}, /api/ask
