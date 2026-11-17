@@ -390,7 +390,7 @@ function showAudit() {
   state.selected = null;
   document.querySelectorAll(".queue-item button").forEach((b) => b.setAttribute("aria-current", "false"));
   const pane = document.getElementById("case");
-  pane.replaceChildren(...renderAudit(state.audit));
+  pane.replaceChildren(...renderAudit(state.audit).filter(Boolean));  // drop empty slots, or the page prints "null"
   pane.querySelector("h2").scrollIntoView({ block: "nearest" });
 }
 

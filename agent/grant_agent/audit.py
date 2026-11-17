@@ -154,7 +154,7 @@ def audit(funded: list[dict], naics_by_id: dict, applicant_ids: list[str], tract
         "findings": findings,
         "industry": industry,
         "edge_generator_bias": {"shows": bool(bias_sectors), "sectors": bias_sectors},
-        "need": {k: {kk: (round(vv, 3) if vv is not None else None) for kk, vv in val.items()}
+        "need": {k: {kk: (round(vv, 4) if vv is not None else None) for kk, vv in val.items()}
                  for k, val in need.items()},
         "modeled_evidence": {
             "plan_cascade_share_dollar_weighted": round(plan_cascade_share, 2) if plan_cascade_share is not None else None,
