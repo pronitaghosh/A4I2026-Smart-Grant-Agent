@@ -1,0 +1,11 @@
+# Builds the grant desk image from the repo root so agent/grant_agent is included.
+#   gcloud builds submit --config frontend/cloudbuild.yaml .
+#   gcloud run deploy grant-desk --image us-west2-docker.pkg.dev/PROJECT/cloud-run-source-deploy/grant-desk:live --region us-west2
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: ["build", "-f", "frontend/Dockerfile", "-t", "${_IMAGE}", "."]
+images: ["${_IMAGE}"]
+substitutions:
+  _IMAGE: us-west2-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/grant-desk:live
+options:
+  dynamicSubstitutions: true
