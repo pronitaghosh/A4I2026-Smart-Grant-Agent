@@ -33,14 +33,14 @@ https://grant-agent-173086820802.us-west2.run.app. The grant desk (`frontend/`) 
   neither variable set, the code falls back to `gemini-2.5-flash` in `us-central1`, a pair that
   also works. The agent refuses to start with any location other than `us-central1` or `global`,
   because us-west2 returns `FAILED_PRECONDITION` for every Gemini model.
-- **Tools:** our three Python function tools. When `TOOLBOX_URL` is set, it also gets the
+- **Tools:** our four Python function tools. When `TOOLBOX_URL` is set, it also gets the
   Toolbox's `grant_toolset` through ADK's `ToolboxToolset`. That connects on first use, so the
   agent still loads if the Toolbox is down. Without `TOOLBOX_URL`, the instruction gains a rule:
   lookups are unavailable, so ask for a `business_id` and don't invent name matches, loans or
   tract profiles.
 - **Instruction:** `prompt.py`. It routes questions to tools: "Who should we fund?" goes to
   `recommend_grants`, "Why this one?" to `get_cascade`, "Who else is exposed?" to
-  `exposed_non_applicants`, and lookups to the Toolbox. It also fixes the answer format: an award
+  `exposed_non_applicants`, "Is this fair?" to `audit_allocation`, and lookups to the Toolbox. It also fixes the answer format: an award
   table, reasons with the strongest chain written A → B → C, the runner-up, the assumptions, the
   evidence note and the neighborhood. And it sets the rules:
   - Every number comes from a tool result. If none gives it, say so.

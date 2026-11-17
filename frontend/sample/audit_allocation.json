@@ -119,14 +119,14 @@
   },
   "need": {
    "poverty_rate": {
-    "corridor_avg": 0.215,
-    "applicant_avg": 0.232,
-    "funded_dollar_weighted": 0.248
+    "corridor_avg": 0.2148,
+    "applicant_avg": 0.2324,
+    "funded_dollar_weighted": 0.2477
    },
    "no_vehicle_rate": {
-    "corridor_avg": 0.738,
-    "applicant_avg": 0.78,
-    "funded_dollar_weighted": 0.807
+    "corridor_avg": 0.7375,
+    "applicant_avg": 0.7796,
+    "funded_dollar_weighted": 0.8074
    }
   },
   "modeled_evidence": {
