@@ -874,7 +874,8 @@ money, stone for the corridor baseline, amber for anything to look at twice.
 .share-num { text-align: right; }
 .tag.over, .tag.under { margin-left: 0; color: var(--amber); border: 1px solid var(--amber); }
 .tag.modeled { color: var(--muted); border: 1px solid var(--stone); }
-.tag.bias { margin-left: 6px; color: #fff; background: var(--amber); }
+.tag.bias { color: #fff; background: var(--amber); }
+.audit-table td .tag { margin: 0 6px 4px 0; }  /* tags in the flag column line up and wrap cleanly */
 .memo-lines { margin: 0 0 22px; }
 .cause { display: block; margin-top: 3px; font-size: 12px; color: var(--muted); }
 .audit-table td:last-child { min-width: 230px; }
