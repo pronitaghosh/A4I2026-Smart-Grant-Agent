@@ -45,6 +45,8 @@ an audit that came back clean."*
 
 ## Step 1: Expose the value split in `allocator.py` (5 min)
 
+**Status: built** (commit `1498afa`, PR #17).
+
 The audit needs to know how much of each award's value is the applicant's own survival and how
 much is the modeled cascade. Add this function above `recommend()`:
 
@@ -63,6 +65,7 @@ Then in `recommend()`, inside the `for a in apps:` loop, compute it and add two 
 Replace:
 
 ```python
+        priority_solo = portfolio_value([a], {a.business_id: a.requested}, corridor_poverty, A)
         rows.append({
             "business_id": a.business_id, "name": a.name, "address": a.address,
 ```
@@ -70,11 +73,20 @@ Replace:
 with:
 
 ```python
-        own_v, casc_v = value_split(a, aw, corridor_poverty, A)
+        priority_solo = portfolio_value([a], {a.business_id: a.requested}, corridor_poverty, A)
+        # Unweighted (raw), like the closures reported above; the audit uses the own/cascade ratio.
+        own_v, casc_v = value_split(a, aw, corridor_poverty, raw)
         rows.append({
             "business_id": a.business_id, "name": a.name, "address": a.address,
             "own_value": round(own_v, 4), "cascade_value": round(casc_v, 4),
 ```
+
+**Why `raw`, not `A`:** since the review fixes, `recommend()` reports closures avoided
+**unweighted** (`raw`, with `NEED_WEIGHT` at 0) and keeps the need-weighted figure separately as
+`priority` for ranking. Passing `raw` puts `own_value` and `cascade_value` in the same units as
+`closures_avoided_by_this_grant`, so the two add up to it for each grant. The audit only uses the
+**cascade share**, `cascade_value / (own_value + cascade_value)`, and the need multiplier cancels
+out of that ratio, so audit results are the same either way.
 
 Run `python -m pytest tests` (from `agent/`). The existing tests must still pass.
 
