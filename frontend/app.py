@@ -51,10 +51,14 @@ if os.environ.get("GCLOUD_ACCESS_TOKEN"):
 try:
     from grant_agent import tools as agent_tools  # the agent lane's tools
 
+    # The package can exist before its tools are written (the scaffold has empty files).
+    missing = [f for f in ("recommend_grants", "get_cascade") if not hasattr(agent_tools, f)]
+    if missing:
+        raise ImportError(f"grant_agent.tools has no {', '.join(missing)} yet")
     if _bq is not None:
         agent_tools._bq = _bq
     SOURCE = "live"
-except Exception:  # not merged yet, or its dependencies are missing
+except Exception:  # not merged yet, not written yet, or its dependencies are missing
     agent_tools = None
     SOURCE = "sample"
 
