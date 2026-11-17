@@ -26,10 +26,11 @@ https://grant-agent-173086820802.us-west2.run.app. The grant desk (`frontend/`) 
 
 `root_agent` (in `agent.py`) is an `Agent` named `grant_agent`:
 
-- **Model:** `GEMINI_MODEL`, default `gemini-2.5-flash`, through Vertex AI.
-  `GOOGLE_CLOUD_LOCATION` defaults to `us-central1`. The agent refuses to start with any location
-  other than `us-central1` or `global`, because Gemini isn't available to this project in
-  us-west2.
+- **Model:** `GEMINI_MODEL` through Vertex AI. The deployment runs `gemini-3.8-flash` with
+  `GOOGLE_CLOUD_LOCATION=global`, the only location that serves 3.8 Flash to this project. With
+  neither variable set, the code falls back to `gemini-2.5-flash` in `us-central1`, a pair that
+  also works. The agent refuses to start with any location other than `us-central1` or `global`,
+  because us-west2 returns `FAILED_PRECONDITION` for every Gemini model.
 - **Tools:** our three Python function tools. When `TOOLBOX_URL` is set, it also gets the
   Toolbox's `grant_toolset` through ADK's `ToolboxToolset`. That connects on first use, so the
   agent still loads if the Toolbox is down. Without `TOOLBOX_URL`, the instruction gains a rule:
@@ -165,8 +166,8 @@ it's gitignored:
 ```bash
 GOOGLE_GENAI_USE_ENTERPRISE=1          # Gemini through Vertex AI (the guide's GOOGLE_GENAI_USE_VERTEXAI=TRUE also works)
 GOOGLE_CLOUD_PROJECT=qwiklabs-gcp-04-524776bdd295
-GOOGLE_CLOUD_LOCATION=us-central1      # Gemini isn't available to this project in us-west2
-GEMINI_MODEL=gemini-2.5-flash
+GOOGLE_CLOUD_LOCATION=global           # 3.8 Flash is served to this project only at the global endpoint
+GEMINI_MODEL=gemini-3.8-flash
 TOOLBOX_URL=https://toolbox-173086820802.us-west2.run.app   # optional
 ```
 

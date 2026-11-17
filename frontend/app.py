@@ -74,7 +74,7 @@ except ImportError as exc:
 app = FastAPI(title="Grant desk")
 
 
-@lru_cache(maxsize=2)
+@lru_cache(maxsize=4)
 def _sample(name: str) -> dict:
     return json.loads((SAMPLE / f"{name}.json").read_text())
 
@@ -135,6 +135,35 @@ def cascade(business_id: str) -> dict:
     if c is None:
         raise HTTPException(404, f"Business {business_id} is not in the applicant queue.")
     return c
+
+
+@lru_cache(maxsize=8)
+def _live_audit(budget: float) -> dict:
+    a = agent_tools.audit_allocation(budget)
+    if "error" in a:
+        raise HTTPException(503, f"The agent's audit_allocation tool said: {a['error']}")
+    return a
+
+
+@app.get("/api/audit")
+def audit(budget: float = 50000) -> dict:
+    if SOURCE == "live":
+        # Never pair a live plan with a sample audit: they would describe different plans.
+        if not hasattr(agent_tools, "audit_allocation"):
+            raise HTTPException(404, "The agent's audit_allocation tool isn't merged yet.")
+        try:
+            return {"source": "live", **_live_audit(budget)}
+        except HTTPException:
+            raise
+        except Exception as exc:  # same contract as /api/recommendation: a 503, not a stack trace
+            logging.getLogger(__name__).exception("Live equity audit failed")
+            raise HTTPException(503, "Live data is unavailable; retry or use saved sample mode.") from exc
+    if not (SAMPLE / "audit_allocation.json").exists():
+        raise HTTPException(404, "No equity audit sample captured yet (see Step 10).")
+    s = _sample("audit_allocation")
+    if budget != s["audit_allocation"]["plan"]["budget"]:
+        raise HTTPException(422, "This saved sample supports only its captured $50,000 budget.")
+    return {"source": "sample", "captured": s["meta"]["captured"], **s["audit_allocation"]}
 
 
 class Question(BaseModel):

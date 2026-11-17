@@ -6,9 +6,9 @@ if os.environ["GOOGLE_CLOUD_LOCATION"] not in {"us-central1", "global"}:
     raise RuntimeError("For this deployment, set GOOGLE_CLOUD_LOCATION=us-central1 or global.")
 
 from .prompt import SYSTEM_INSTRUCTION
-from .tools import get_cascade, recommend_grants, exposed_non_applicants
+from .tools import get_cascade, recommend_grants, exposed_non_applicants, audit_allocation
 
-tools = [recommend_grants, get_cascade, exposed_non_applicants]
+tools = [recommend_grants, get_cascade, exposed_non_applicants, audit_allocation]
 
 # MCP Toolbox (Step 9). Optional so the agent still runs locally before Toolbox is up.
 # ToolboxToolset connects on first use, not at import, so an unreachable Toolbox
