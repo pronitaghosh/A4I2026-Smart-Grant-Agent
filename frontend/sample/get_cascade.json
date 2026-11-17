@@ -1,0 +1,899 @@
+{
+ "meta": {
+  "captured": "2026-11-17",
+  "source": "agent/BUILD_GUIDE.md allocator on live a4i_econ tables",
+  "corridor_poverty": 0.21476030177160027
+ },
+ "get_cascade": {
+  "1": {
+   "business": {
+    "business_id": "1",
+    "name": "Hound Technology, Inc/Honeycomb",
+    "address": "944 Market St Fl 6",
+    "naics4": "5415"
+   },
+   "depth": 2,
+   "exposed_count": 45,
+   "by_hop": {
+    "1": 8,
+    "2": 37
+   },
+   "local_alternatives_same_industry": 9,
+   "is_leaf": false,
+   "paths": [
+    {
+     "exposed_id": "67",
+     "hops": 1,
+     "weight": 0.245,
+     "path": "Hound Technology, Inc/Honeycomb \u2192 West Coast Realties",
+     "link_intensities": [
+      0.0123
+     ]
+    },
+    {
+     "exposed_id": "209",
+     "hops": 1,
+     "weight": 0.245,
+     "path": "Hound Technology, Inc/Honeycomb \u2192 Sfgate.Com",
+     "link_intensities": [
+      0.0123
+     ]
+    },
+    {
+     "exposed_id": "121",
+     "hops": 1,
+     "weight": 0.245,
+     "path": "Hound Technology, Inc/Honeycomb \u2192 The Hearst Corp",
+     "link_intensities": [
+      0.0123
+     ]
+    },
+    {
+     "exposed_id": "162",
+     "hops": 1,
+     "weight": 0.245,
+     "path": "Hound Technology, Inc/Honeycomb \u2192 5m Hearst",
+     "link_intensities": [
+      0.0123
+     ]
+    },
+    {
+     "exposed_id": "108",
+     "hops": 1,
+     "weight": 0.245,
+     "path": "Hound Technology, Inc/Honeycomb \u2192 San Francisco Chronicle",
+     "link_intensities": [
+      0.0123
+     ]
+    },
+    {
+     "exposed_id": "210",
+     "hops": 1,
+     "weight": 0.245,
+     "path": "Hound Technology, Inc/Honeycomb \u2192 Newspaper Administration",
+     "link_intensities": [
+      0.0123
+     ]
+    },
+    {
+     "exposed_id": "204",
+     "hops": 1,
+     "weight": 0.19,
+     "path": "Hound Technology, Inc/Honeycomb \u2192 Law Off Michael Gurfinkel Inc",
+     "link_intensities": [
+      0.0095
+     ]
+    },
+    {
+     "exposed_id": "195",
+     "hops": 1,
+     "weight": 0.19,
+     "path": "Hound Technology, Inc/Honeycomb \u2192 Eviction Defense Collaborative",
+     "link_intensities": [
+      0.0095
+     ]
+    },
+    {
+     "exposed_id": "90",
+     "hops": 2,
+     "weight": 0.03,
+     "path": "Hound Technology, Inc/Honeycomb \u2192 Eviction Defense Collaborative \u2192 Industrious",
+     "link_intensities": [
+      0.0095,
+      0.0156
+     ]
+    },
+    {
+     "exposed_id": "98",
+     "hops": 2,
+     "weight": 0.03,
+     "path": "Hound Technology, Inc/Honeycomb \u2192 Eviction Defense Collaborative \u2192 Arista Networks Inc",
+     "link_intensities": [
+      0.0095,
+      0.0156
+     ]
+    },
+    {
+     "exposed_id": "199",
+     "hops": 2,
+     "weight": 0.028,
+     "path": "Hound Technology, Inc/Honeycomb \u2192 Law Off Michael Gurfinkel Inc \u2192 San Francisco Gyrotonic",
+     "link_intensities": [
+      0.0095,
+      0.0146
+     ]
+    },
+    {
+     "exposed_id": "15",
+     "hops": 2,
+     "weight": 0.028,
+     "path": "Hound Technology, Inc/Honeycomb \u2192 Eviction Defense Collaborative \u2192 The Ballroom",
+     "link_intensities": [
+      0.0095,
+      0.0146
+     ]
+    },
+    {
+     "exposed_id": "13",
+     "hops": 2,
+     "weight": 0.028,
+     "path": "Hound Technology, Inc/Honeycomb \u2192 Eviction Defense Collaborative \u2192 Orangefitness Theory",
+     "link_intensities": [
+      0.0095,
+      0.0146
+     ]
+    },
+    {
+     "exposed_id": "66",
+     "hops": 2,
+     "weight": 0.022,
+     "path": "Hound Technology, Inc/Honeycomb \u2192 Law Off Michael Gurfinkel Inc \u2192 Non Plus Ultra",
+     "link_intensities": [
+      0.0095,
+      0.0118
+     ]
+    },
+    {
+     "exposed_id": "155",
+     "hops": 2,
+     "weight": 0.022,
+     "path": "Hound Technology, Inc/Honeycomb \u2192 Law Off Michael Gurfinkel Inc \u2192 Golden Gate Theatre",
+     "link_intensities": [
+      0.0095,
+      0.0118
+     ]
+    }
+   ],
+   "evidence_note": "Businesses, addresses, industries, SBA loans and tract demographics are real. Supply links are MODELED: the industry-to-industry purchase rates are published by the U.S. Bureau of Economic Analysis, but which specific business buys from which is our assignment (industry match + walking distance). Applicant financials are illustrative."
+  },
+  "135": {
+   "business": {
+    "business_id": "135",
+    "name": "Honeybee Foods Corporation Dba Jollibee",
+    "address": "934 Market St",
+    "naics4": "7225"
+   },
+   "depth": 2,
+   "exposed_count": 10,
+   "by_hop": {
+    "1": 2,
+    "2": 8
+   },
+   "local_alternatives_same_industry": 28,
+   "is_leaf": false,
+   "paths": [
+    {
+     "exposed_id": "123",
+     "hops": 1,
+     "weight": 0.711,
+     "path": "Honeybee Foods Corporation Dba Jollibee \u2192 Warfield Hotel Inc",
+     "link_intensities": [
+      0.0356
+     ]
+    },
+    {
+     "exposed_id": "1",
+     "hops": 1,
+     "weight": 0.262,
+     "path": "Honeybee Foods Corporation Dba Jollibee \u2192 Hound Technology, Inc/Honeycomb",
+     "link_intensities": [
+      0.0131
+     ]
+    },
+    {
+     "exposed_id": "210",
+     "hops": 2,
+     "weight": 0.032,
+     "path": "Honeybee Foods Corporation Dba Jollibee \u2192 Hound Technology, Inc/Honeycomb \u2192 Newspaper Administration",
+     "link_intensities": [
+      0.0131,
+      0.0123
+     ]
+    },
+    {
+     "exposed_id": "67",
+     "hops": 2,
+     "weight": 0.032,
+     "path": "Honeybee Foods Corporation Dba Jollibee \u2192 Hound Technology, Inc/Honeycomb \u2192 West Coast Realties",
+     "link_intensities": [
+      0.0131,
+      0.0123
+     ]
+    },
+    {
+     "exposed_id": "209",
+     "hops": 2,
+     "weight": 0.032,
+     "path": "Honeybee Foods Corporation Dba Jollibee \u2192 Hound Technology, Inc/Honeycomb \u2192 Sfgate.Com",
+     "link_intensities": [
+      0.0131,
+      0.0123
+     ]
+    },
+    {
+     "exposed_id": "162",
+     "hops": 2,
+     "weight": 0.032,
+     "path": "Honeybee Foods Corporation Dba Jollibee \u2192 Hound Technology, Inc/Honeycomb \u2192 5m Hearst",
+     "link_intensities": [
+      0.0131,
+      0.0123
+     ]
+    },
+    {
+     "exposed_id": "108",
+     "hops": 2,
+     "weight": 0.032,
+     "path": "Honeybee Foods Corporation Dba Jollibee \u2192 Hound Technology, Inc/Honeycomb \u2192 San Francisco Chronicle",
+     "link_intensities": [
+      0.0131,
+      0.0123
+     ]
+    },
+    {
+     "exposed_id": "121",
+     "hops": 2,
+     "weight": 0.032,
+     "path": "Honeybee Foods Corporation Dba Jollibee \u2192 Hound Technology, Inc/Honeycomb \u2192 The Hearst Corp",
+     "link_intensities": [
+      0.0131,
+      0.0123
+     ]
+    },
+    {
+     "exposed_id": "195",
+     "hops": 2,
+     "weight": 0.025,
+     "path": "Honeybee Foods Corporation Dba Jollibee \u2192 Hound Technology, Inc/Honeycomb \u2192 Eviction Defense Collaborative",
+     "link_intensities": [
+      0.0131,
+      0.0095
+     ]
+    },
+    {
+     "exposed_id": "204",
+     "hops": 2,
+     "weight": 0.025,
+     "path": "Honeybee Foods Corporation Dba Jollibee \u2192 Hound Technology, Inc/Honeycomb \u2192 Law Off Michael Gurfinkel Inc",
+     "link_intensities": [
+      0.0131,
+      0.0095
+     ]
+    }
+   ],
+   "evidence_note": "Businesses, addresses, industries, SBA loans and tract demographics are real. Supply links are MODELED: the industry-to-industry purchase rates are published by the U.S. Bureau of Economic Analysis, but which specific business buys from which is our assignment (industry match + walking distance). Applicant financials are illustrative."
+  },
+  "85": {
+   "business": {
+    "business_id": "85",
+    "name": "Supremo Pizza Inc",
+    "address": "87 6th St",
+    "naics4": "7225"
+   },
+   "depth": 2,
+   "exposed_count": 1,
+   "by_hop": {
+    "1": 1,
+    "2": 0
+   },
+   "local_alternatives_same_industry": 28,
+   "is_leaf": false,
+   "paths": [
+    {
+     "exposed_id": "92",
+     "hops": 1,
+     "weight": 0.711,
+     "path": "Supremo Pizza Inc \u2192 Oak Tree Hotel",
+     "link_intensities": [
+      0.0356
+     ]
+    }
+   ],
+   "evidence_note": "Businesses, addresses, industries, SBA loans and tract demographics are real. Supply links are MODELED: the industry-to-industry purchase rates are published by the U.S. Bureau of Economic Analysis, but which specific business buys from which is our assignment (industry match + walking distance). Applicant financials are illustrative."
+  },
+  "211": {
+   "business": {
+    "business_id": "211",
+    "name": "San Francisco Proper Hotel - Villon",
+    "address": "1100 Market St",
+    "naics4": "721"
+   },
+   "depth": 2,
+   "exposed_count": 0,
+   "by_hop": {
+    "1": 0,
+    "2": 0
+   },
+   "local_alternatives_same_industry": 3,
+   "is_leaf": true,
+   "paths": [],
+   "evidence_note": "Businesses, addresses, industries, SBA loans and tract demographics are real. Supply links are MODELED: the industry-to-industry purchase rates are published by the U.S. Bureau of Economic Analysis, but which specific business buys from which is our assignment (industry match + walking distance). Applicant financials are illustrative."
+  },
+  "185": {
+   "business": {
+    "business_id": "185",
+    "name": "Soliome Inc",
+    "address": "479 Jessie St",
+    "naics4": "325"
+   },
+   "depth": 2,
+   "exposed_count": 0,
+   "by_hop": {
+    "1": 0,
+    "2": 0
+   },
+   "local_alternatives_same_industry": 0,
+   "is_leaf": true,
+   "paths": [],
+   "evidence_note": "Businesses, addresses, industries, SBA loans and tract demographics are real. Supply links are MODELED: the industry-to-industry purchase rates are published by the U.S. Bureau of Economic Analysis, but which specific business buys from which is our assignment (industry match + walking distance). Applicant financials are illustrative."
+  },
+  "43": {
+   "business": {
+    "business_id": "43",
+    "name": "Wpengine, Inc.",
+    "address": "1161 Mission Street",
+    "naics4": "5415"
+   },
+   "depth": 2,
+   "exposed_count": 123,
+   "by_hop": {
+    "1": 5,
+    "2": 118
+   },
+   "local_alternatives_same_industry": 9,
+   "is_leaf": false,
+   "paths": [
+    {
+     "exposed_id": "171",
+     "hops": 1,
+     "weight": 0.409,
+     "path": "Wpengine, Inc. \u2192 Tradespace",
+     "link_intensities": [
+      0.0205
+     ]
+    },
+    {
+     "exposed_id": "6",
+     "hops": 1,
+     "weight": 0.245,
+     "path": "Wpengine, Inc. \u2192 Block Inc",
+     "link_intensities": [
+      0.0123
+     ]
+    },
+    {
+     "exposed_id": "225",
+     "hops": 1,
+     "weight": 0.245,
+     "path": "Wpengine, Inc. \u2192 Block Inc",
+     "link_intensities": [
+      0.0123
+     ]
+    },
+    {
+     "exposed_id": "198",
+     "hops": 1,
+     "weight": 0.19,
+     "path": "Wpengine, Inc. \u2192 Mission Hl LLC",
+     "link_intensities": [
+      0.0095
+     ]
+    },
+    {
+     "exposed_id": "182",
+     "hops": 1,
+     "weight": 0.19,
+     "path": "Wpengine, Inc. \u2192 A & A Legal Service, Inc.",
+     "link_intensities": [
+      0.0095
+     ]
+    },
+    {
+     "exposed_id": "64",
+     "hops": 2,
+     "weight": 0.085,
+     "path": "Wpengine, Inc. \u2192 Tradespace \u2192 415 Ebikes",
+     "link_intensities": [
+      0.0205,
+      0.0209
+     ]
+    },
+    {
+     "exposed_id": "165",
+     "hops": 2,
+     "weight": 0.077,
+     "path": "Wpengine, Inc. \u2192 Tradespace \u2192 Haru By Sams",
+     "link_intensities": [
+      0.0205,
+      0.0188
+     ]
+    },
+    {
+     "exposed_id": "138",
+     "hops": 2,
+     "weight": 0.077,
+     "path": "Wpengine, Inc. \u2192 Tradespace \u2192 Club Omg!",
+     "link_intensities": [
+      0.0205,
+      0.0188
+     ]
+    },
+    {
+     "exposed_id": "84",
+     "hops": 2,
+     "weight": 0.077,
+     "path": "Wpengine, Inc. \u2192 Tradespace \u2192 Canteen",
+     "link_intensities": [
+      0.0205,
+      0.0188
+     ]
+    },
+    {
+     "exposed_id": "173",
+     "hops": 2,
+     "weight": 0.077,
+     "path": "Wpengine, Inc. \u2192 Tradespace \u2192 The Barbary Coast Pastry And Coffee",
+     "link_intensities": [
+      0.0205,
+      0.0188
+     ]
+    },
+    {
+     "exposed_id": "29",
+     "hops": 2,
+     "weight": 0.077,
+     "path": "Wpengine, Inc. \u2192 Tradespace \u2192 Monarch Beverage Catering LLC",
+     "link_intensities": [
+      0.0205,
+      0.0188
+     ]
+    },
+    {
+     "exposed_id": "186",
+     "hops": 2,
+     "weight": 0.077,
+     "path": "Wpengine, Inc. \u2192 Tradespace \u2192 Chico's Pizza",
+     "link_intensities": [
+      0.0205,
+      0.0188
+     ]
+    },
+    {
+     "exposed_id": "27",
+     "hops": 2,
+     "weight": 0.077,
+     "path": "Wpengine, Inc. \u2192 Tradespace \u2192 Mr Tipple's Recording Studio",
+     "link_intensities": [
+      0.0205,
+      0.0188
+     ]
+    },
+    {
+     "exposed_id": "201",
+     "hops": 2,
+     "weight": 0.077,
+     "path": "Wpengine, Inc. \u2192 Tradespace \u2192 G.Rabbit",
+     "link_intensities": [
+      0.0205,
+      0.0188
+     ]
+    },
+    {
+     "exposed_id": "136",
+     "hops": 2,
+     "weight": 0.077,
+     "path": "Wpengine, Inc. \u2192 Tradespace \u2192 Merchant Roots",
+     "link_intensities": [
+      0.0205,
+      0.0188
+     ]
+    }
+   ],
+   "evidence_note": "Businesses, addresses, industries, SBA loans and tract demographics are real. Supply links are MODELED: the industry-to-industry purchase rates are published by the U.S. Bureau of Economic Analysis, but which specific business buys from which is our assignment (industry match + walking distance). Applicant financials are illustrative."
+  },
+  "106": {
+   "business": {
+    "business_id": "106",
+    "name": "Blue Bottle Coffee LLC",
+    "address": "66 Mint St",
+    "naics4": "7225"
+   },
+   "depth": 2,
+   "exposed_count": 1,
+   "by_hop": {
+    "1": 1,
+    "2": 0
+   },
+   "local_alternatives_same_industry": 28,
+   "is_leaf": false,
+   "paths": [
+    {
+     "exposed_id": "133",
+     "hops": 1,
+     "weight": 0.711,
+     "path": "Blue Bottle Coffee LLC \u2192 Hampton Inn San Francisco Downtown Convention Center",
+     "link_intensities": [
+      0.0356
+     ]
+    }
+   ],
+   "evidence_note": "Businesses, addresses, industries, SBA loans and tract demographics are real. Supply links are MODELED: the industry-to-industry purchase rates are published by the U.S. Bureau of Economic Analysis, but which specific business buys from which is our assignment (industry match + walking distance). Applicant financials are illustrative."
+  },
+  "7": {
+   "business": {
+    "business_id": "7",
+    "name": "North Beach Parking Services, Inc",
+    "address": "1270 Mission St",
+    "naics4": "8129"
+   },
+   "depth": 2,
+   "exposed_count": 30,
+   "by_hop": {
+    "1": 3,
+    "2": 27
+   },
+   "local_alternatives_same_industry": 16,
+   "is_leaf": false,
+   "paths": [
+    {
+     "exposed_id": "216",
+     "hops": 1,
+     "weight": 0.223,
+     "path": "North Beach Parking Services, Inc \u2192 Street Taco",
+     "link_intensities": [
+      0.0112
+     ]
+    },
+    {
+     "exposed_id": "221",
+     "hops": 1,
+     "weight": 0.182,
+     "path": "North Beach Parking Services, Inc \u2192 Glhq Inc.",
+     "link_intensities": [
+      0.0091
+     ]
+    },
+    {
+     "exposed_id": "8",
+     "hops": 1,
+     "weight": 0.182,
+     "path": "North Beach Parking Services, Inc \u2192 S.F. Friends Meeting, Inc.",
+     "link_intensities": [
+      0.0091
+     ]
+    },
+    {
+     "exposed_id": "224",
+     "hops": 2,
+     "weight": 0.079,
+     "path": "North Beach Parking Services, Inc \u2192 Street Taco \u2192 Ram's Hotel",
+     "link_intensities": [
+      0.0112,
+      0.0356
+     ]
+    },
+    {
+     "exposed_id": "59",
+     "hops": 2,
+     "weight": 0.079,
+     "path": "North Beach Parking Services, Inc \u2192 Street Taco \u2192 Bei San Francisco",
+     "link_intensities": [
+      0.0112,
+      0.0356
+     ]
+    },
+    {
+     "exposed_id": "4",
+     "hops": 2,
+     "weight": 0.079,
+     "path": "North Beach Parking Services, Inc \u2192 Street Taco \u2192 Soma Park Inn",
+     "link_intensities": [
+      0.0112,
+      0.0356
+     ]
+    },
+    {
+     "exposed_id": "61",
+     "hops": 2,
+     "weight": 0.079,
+     "path": "North Beach Parking Services, Inc \u2192 Street Taco \u2192 Potter Hotel",
+     "link_intensities": [
+      0.0112,
+      0.0356
+     ]
+    },
+    {
+     "exposed_id": "57",
+     "hops": 2,
+     "weight": 0.055,
+     "path": "North Beach Parking Services, Inc \u2192 Street Taco \u2192 Richmond Area Multi Serv Inc",
+     "link_intensities": [
+      0.0112,
+      0.0248
+     ]
+    },
+    {
+     "exposed_id": "9",
+     "hops": 2,
+     "weight": 0.055,
+     "path": "North Beach Parking Services, Inc \u2192 Street Taco \u2192 Calworks/Fu Yau Project",
+     "link_intensities": [
+      0.0112,
+      0.0248
+     ]
+    },
+    {
+     "exposed_id": "38",
+     "hops": 2,
+     "weight": 0.036,
+     "path": "North Beach Parking Services, Inc \u2192 Street Taco \u2192 1100 Ocean Avenue Lp",
+     "link_intensities": [
+      0.0112,
+      0.0161
+     ]
+    },
+    {
+     "exposed_id": "167",
+     "hops": 2,
+     "weight": 0.036,
+     "path": "North Beach Parking Services, Inc \u2192 Street Taco \u2192 Mercy Housing Ca 53, A Ca Lp",
+     "link_intensities": [
+      0.0112,
+      0.0161
+     ]
+    },
+    {
+     "exposed_id": "163",
+     "hops": 2,
+     "weight": 0.036,
+     "path": "North Beach Parking Services, Inc \u2192 Street Taco \u2192 Washburn Housing Corporation",
+     "link_intensities": [
+      0.0112,
+      0.0161
+     ]
+    },
+    {
+     "exposed_id": "183",
+     "hops": 2,
+     "weight": 0.036,
+     "path": "North Beach Parking Services, Inc \u2192 Street Taco \u2192 Mercy Housing Ca Xliv Ca Lp",
+     "link_intensities": [
+      0.0112,
+      0.0161
+     ]
+    },
+    {
+     "exposed_id": "28",
+     "hops": 2,
+     "weight": 0.036,
+     "path": "North Beach Parking Services, Inc \u2192 Street Taco \u2192 Mercy Housing Ca 50 A Ca Lp",
+     "link_intensities": [
+      0.0112,
+      0.0161
+     ]
+    },
+    {
+     "exposed_id": "82",
+     "hops": 2,
+     "weight": 0.036,
+     "path": "North Beach Parking Services, Inc \u2192 Street Taco \u2192 Conard House Inc.",
+     "link_intensities": [
+      0.0112,
+      0.0161
+     ]
+    }
+   ],
+   "evidence_note": "Businesses, addresses, industries, SBA loans and tract demographics are real. Supply links are MODELED: the industry-to-industry purchase rates are published by the U.S. Bureau of Economic Analysis, but which specific business buys from which is our assignment (industry match + walking distance). Applicant financials are illustrative."
+  },
+  "73": {
+   "business": {
+    "business_id": "73",
+    "name": "Eddy St Bodega Inc",
+    "address": "200 Eddy St",
+    "naics4": "4451"
+   },
+   "depth": 2,
+   "exposed_count": 0,
+   "by_hop": {
+    "1": 0,
+    "2": 0
+   },
+   "local_alternatives_same_industry": 12,
+   "is_leaf": true,
+   "paths": [],
+   "evidence_note": "Businesses, addresses, industries, SBA loans and tract demographics are real. Supply links are MODELED: the industry-to-industry purchase rates are published by the U.S. Bureau of Economic Analysis, but which specific business buys from which is our assignment (industry match + walking distance). Applicant financials are illustrative."
+  },
+  "171": {
+   "business": {
+    "business_id": "171",
+    "name": "Tradespace",
+    "address": "1161 Mission St",
+    "naics4": "5182"
+   },
+   "depth": 2,
+   "exposed_count": 194,
+   "by_hop": {
+    "1": 113,
+    "2": 81
+   },
+   "local_alternatives_same_industry": 0,
+   "is_leaf": false,
+   "paths": [
+    {
+     "exposed_id": "64",
+     "hops": 1,
+     "weight": 0.417,
+     "path": "Tradespace \u2192 415 Ebikes",
+     "link_intensities": [
+      0.0209
+     ]
+    },
+    {
+     "exposed_id": "109",
+     "hops": 1,
+     "weight": 0.377,
+     "path": "Tradespace \u2192 Extraveganza Eatery",
+     "link_intensities": [
+      0.0188
+     ]
+    },
+    {
+     "exposed_id": "126",
+     "hops": 1,
+     "weight": 0.377,
+     "path": "Tradespace \u2192 The Melt",
+     "link_intensities": [
+      0.0188
+     ]
+    },
+    {
+     "exposed_id": "191",
+     "hops": 1,
+     "weight": 0.377,
+     "path": "Tradespace \u2192 Canteen @ Wework 1460 Mission Street",
+     "link_intensities": [
+      0.0188
+     ]
+    },
+    {
+     "exposed_id": "113",
+     "hops": 1,
+     "weight": 0.377,
+     "path": "Tradespace \u2192 Canteen Refreshment Services",
+     "link_intensities": [
+      0.0188
+     ]
+    },
+    {
+     "exposed_id": "197",
+     "hops": 1,
+     "weight": 0.377,
+     "path": "Tradespace \u2192 Taqueria Angelicas",
+     "link_intensities": [
+      0.0188
+     ]
+    },
+    {
+     "exposed_id": "83",
+     "hops": 1,
+     "weight": 0.377,
+     "path": "Tradespace \u2192 Velora Cafe Inc",
+     "link_intensities": [
+      0.0188
+     ]
+    },
+    {
+     "exposed_id": "45",
+     "hops": 1,
+     "weight": 0.377,
+     "path": "Tradespace \u2192 Sumfer Market Sf LLC",
+     "link_intensities": [
+      0.0188
+     ]
+    },
+    {
+     "exposed_id": "118",
+     "hops": 1,
+     "weight": 0.377,
+     "path": "Tradespace \u2192 54 Mint-Winebar",
+     "link_intensities": [
+      0.0188
+     ]
+    },
+    {
+     "exposed_id": "68",
+     "hops": 1,
+     "weight": 0.377,
+     "path": "Tradespace \u2192 Foodworks",
+     "link_intensities": [
+      0.0188
+     ]
+    },
+    {
+     "exposed_id": "157",
+     "hops": 1,
+     "weight": 0.377,
+     "path": "Tradespace \u2192 Starbucks Coffee #6937",
+     "link_intensities": [
+      0.0188
+     ]
+    },
+    {
+     "exposed_id": "201",
+     "hops": 1,
+     "weight": 0.377,
+     "path": "Tradespace \u2192 G.Rabbit",
+     "link_intensities": [
+      0.0188
+     ]
+    },
+    {
+     "exposed_id": "205",
+     "hops": 1,
+     "weight": 0.377,
+     "path": "Tradespace \u2192 Jay's Grill",
+     "link_intensities": [
+      0.0188
+     ]
+    },
+    {
+     "exposed_id": "165",
+     "hops": 1,
+     "weight": 0.377,
+     "path": "Tradespace \u2192 Haru By Sams",
+     "link_intensities": [
+      0.0188
+     ]
+    },
+    {
+     "exposed_id": "135",
+     "hops": 1,
+     "weight": 0.377,
+     "path": "Tradespace \u2192 Honeybee Foods Corporation Dba Jollibee",
+     "link_intensities": [
+      0.0188
+     ]
+    }
+   ],
+   "evidence_note": "Businesses, addresses, industries, SBA loans and tract demographics are real. Supply links are MODELED: the industry-to-industry purchase rates are published by the U.S. Bureau of Economic Analysis, but which specific business buys from which is our assignment (industry match + walking distance). Applicant financials are illustrative."
+  },
+  "92": {
+   "business": {
+    "business_id": "92",
+    "name": "Oak Tree Hotel",
+    "address": "45 6th St",
+    "naics4": "7211"
+   },
+   "depth": 2,
+   "exposed_count": 0,
+   "by_hop": {
+    "1": 0,
+    "2": 0
+   },
+   "local_alternatives_same_industry": 9,
+   "is_leaf": true,
+   "paths": [],
+   "evidence_note": "Businesses, addresses, industries, SBA loans and tract demographics are real. Supply links are MODELED: the industry-to-industry purchase rates are published by the U.S. Bureau of Economic Analysis, but which specific business buys from which is our assignment (industry match + walking distance). Applicant financials are illustrative."
+  }
+ }
+}
