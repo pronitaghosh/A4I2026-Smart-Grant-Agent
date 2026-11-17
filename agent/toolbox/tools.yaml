@@ -1,0 +1,58 @@
+sources:
+  bq:
+    kind: bigquery
+    project: ${PROJECT_ID}
+    location: US
+
+tools:
+  list_applications:
+    kind: bigquery-sql
+    source: bq
+    description: List every grant application with business name, address, amount requested and hardship.
+    statement: |
+      SELECT a.application_id, a.business_id, b.name, b.address, b.naics4,
+             a.requested_amount, a.revenue_drop_pct, a.months_cash_on_hand,
+             a.self_reported_employees, a.hardship_note
+      FROM a4i_econ.applications a JOIN a4i_econ.businesses b USING (business_id)
+      ORDER BY a.application_id
+
+  find_business:
+    kind: bigquery-sql
+    source: bq
+    description: Find businesses in the corridor whose name contains the search text. Returns business_id.
+    parameters:
+      - name: name_contains
+        type: string
+        description: Part of the business name, case-insensitive.
+    statement: |
+      SELECT business_id, name, address, naics4
+      FROM a4i_econ.businesses
+      WHERE LOWER(name) LIKE CONCAT('%', LOWER(@name_contains), '%')
+      LIMIT 10
+
+  loan_history:
+    kind: bigquery-sql
+    source: bq
+    description: Real SBA 7(a) loans for a business, including whether any were charged off (the business failed to repay).
+    parameters:
+      - name: business_id
+        type: string
+        description: The business_id.
+    statement: |
+      SELECT bank_name, gross_approval, approval_date, loan_status, charged_off
+      FROM a4i_econ.borrowed_from WHERE business_id = @business_id
+
+  tract_profile:
+    kind: bigquery-sql
+    source: bq
+    description: Census tract demographics (poverty, vehicle access, public assistance, median income) for a business's location.
+    parameters:
+      - name: business_id
+        type: string
+        description: The business_id.
+    statement: |
+      SELECT geo_id, poverty_rate, no_vehicle_rate, assistance_rate, median_income
+      FROM a4i_econ.business_tract WHERE business_id = @business_id
+
+toolsets:
+  grant_toolset: [list_applications, find_business, loan_history, tract_profile]
