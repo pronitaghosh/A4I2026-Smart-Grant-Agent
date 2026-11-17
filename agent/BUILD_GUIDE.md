@@ -577,7 +577,8 @@ def _reasons(a: Applicant, award: float, corridor_poverty, A) -> list[str]:
     if a.charged_off_before:
         r.append("Real SBA record shows a prior charged-off loan (raises risk).")
     if baseline_risk(a) < 0.2 and len(a.exposed) >= 10:
-        r.append("Well connected but financially robust: money changes its odds little. This is why the hub is not funded first.")
+        r.append(f"Well connected but financially robust (baseline risk {baseline_risk(a):.0%}): each dollar "
+                 "changes its odds little, so its value comes almost entirely from the cascade it protects.")
     return r
 
 
