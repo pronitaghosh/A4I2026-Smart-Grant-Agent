@@ -18,6 +18,7 @@ Run locally from the repo root:
 from __future__ import annotations
 
 import json
+import logging
 import os
 import sys
 import urllib.error
@@ -48,7 +49,12 @@ if os.environ.get("GCLOUD_ACCESS_TOKEN"):
     _bq = bigquery.Client(project=PROJECT, location="US",
                           credentials=Credentials(token=os.environ["GCLOUD_ACCESS_TOKEN"]))
 
+DATA_MODE = os.environ.get("GRANT_DATA_MODE", "auto")
+if DATA_MODE not in {"auto", "live", "sample"}:
+    raise RuntimeError("GRANT_DATA_MODE must be auto, live, or sample.")
 try:
+    if DATA_MODE == "sample":
+        raise ImportError("Saved sample mode selected")
     from grant_agent import tools as agent_tools  # the agent lane's tools
 
     # The package can exist before its tools are written (the scaffold has empty files).
@@ -56,9 +62,12 @@ try:
     if missing:
         raise ImportError(f"grant_agent.tools has no {', '.join(missing)} yet")
     if _bq is not None:
-        agent_tools._bq = _bq
+        agent_tools._client = lambda: _bq
     SOURCE = "live"
-except Exception:  # not merged yet, not written yet, or its dependencies are missing
+except ImportError as exc:
+    if DATA_MODE == "live":
+        raise
+    logging.getLogger(__name__).warning("Using saved sample: %s", exc)
     agent_tools = None
     SOURCE = "sample"
 
@@ -101,8 +110,16 @@ def _live_recommendation(budget: float) -> dict:
 @app.get("/api/recommendation")
 def recommendation(budget: float = 50000) -> dict:
     if SOURCE == "live":
-        return {"source": "live", **_live_recommendation(budget)}
+        try:
+            return {"source": "live", **_live_recommendation(budget)}
+        except HTTPException:
+            raise
+        except Exception as exc:
+            logging.getLogger(__name__).exception("Live recommendation failed")
+            raise HTTPException(503, "Live data is unavailable; retry or use saved sample mode.") from exc
     s = _sample("recommend_grants")
+    if budget != s["recommend_grants"]["budget"]:
+        raise HTTPException(422, "This saved sample supports only its captured $50,000 budget.")
     return {"source": "sample", "captured": s["meta"]["captured"], **s["recommend_grants"],
             "neighborhood": s["neighborhood"], "corridor_poverty": s["meta"]["corridor_poverty"]}
 
@@ -149,10 +166,25 @@ def ask(q: Question) -> dict:
         })
     except urllib.error.HTTPError as e:
         raise HTTPException(502, f"The agent returned HTTP {e.code}. Check its Cloud Run logs.") from e
+    except (ValueError, TypeError) as e:
+        raise HTTPException(502, "The agent returned an invalid response.") from e
     except OSError as e:
         raise HTTPException(502, f"Couldn't reach the agent at {base}: {e}.") from e
-    texts = [p["text"] for ev in (events or []) for p in ((ev.get("content") or {}).get("parts") or [])
-             if p.get("text")]
+    if not isinstance(events, list) or any(not isinstance(ev, dict) for ev in events):
+        raise HTTPException(502, "The agent returned an invalid event list.")
+    if any(ev.get(k) for ev in events for k in ("errorCode", "errorMessage", "error_code", "error_message")):
+        raise HTTPException(502, "The agent could not complete this request. Please retry.")
+    texts = []
+    for ev in events:
+        content = ev.get("content") or {}
+        parts = content.get("parts") or []
+        if ev.get("partial") or content.get("role") != "model":
+            continue
+        if any(p.get("functionCall") or p.get("functionResponse") for p in parts):
+            continue
+        text = "\n".join(p["text"] for p in parts if p.get("text") and not p.get("thought"))
+        if text:
+            texts.append(text)
     if not texts:
         raise HTTPException(502, "The agent answered without any text. Try rephrasing the question.")
     return {"answer": texts[-1]}

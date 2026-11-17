@@ -7,7 +7,7 @@
 -- and parking firms whose supply links are all weak: with every link required to be >= 0.02, they
 -- had 0 to 2 businesses downstream, so the graph never changed a decision. This queue has:
 --   hub      171 Tradespace            113 buyers, all weak links; financially robust (8% drop, 9 months cash)
---   deep     16  Sour Flour            97 strongly dependent businesses, 96 of them two hops out
+--   deep     16  Sour Flour            97 dependent businesses with every link >= 0.02: 69 direct, 28 at two hops
 --            114 The Warfield Theater  7 (2 at two hops)
 --            66  Non Plus Ultra        6 (2 at two hops)
 --   one_hop  135 Honeybee Foods, 85 Supremo Pizza, 106 Blue Bottle Coffee

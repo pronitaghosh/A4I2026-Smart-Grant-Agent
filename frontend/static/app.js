@@ -78,8 +78,8 @@ function renderDesk() {
   const banner = document.getElementById("source-banner");
   banner.hidden = r.source !== "sample";
   if (r.source === "sample") {
-    banner.textContent = `Sample run of the agent's allocator on today's data, captured ${r.captured}. ` +
-      "The desk switches to the agent's live tools once they're merged.";
+    banner.textContent = `Saved run of the allocator, captured ${r.captured}. ` +
+      "The queue is a saved snapshot; agent answers may use newer live data.";
   }
 }
 
@@ -141,7 +141,7 @@ function riskLine(a, st) {
 function sensitivityTag(a, st) {
   if (st === "not_funded") return null;
   const sens = state.rec.sensitivity;
-  if (sens.funded_in_every_scenario.includes(a.business_id)) return h("span", { class: "tag holds" }, "Holds under every assumption tested");
+  if (sens.funded_in_every_scenario.includes(a.business_id)) return h("span", { class: "tag holds" }, "Receives some funding in every tested scenario");
   const scen = Object.values(sens.funded_ids_by_scenario);
   const n = scen.filter((ids) => ids.includes(a.business_id)).length;
   return h("span", { class: "tag depends" }, `Funded in ${n} of ${scen.length} assumption sets`);
@@ -282,7 +282,7 @@ function lineMap(a, c, st) {
   const hops = Object.entries(c.by_hop).map(([k, v]) => `${v} at ${k} hop${k > 1 ? "s" : ""}`).join(", ");
   const shown = c.paths.length;
   const caption = c.is_leaf
-    ? `No business sits downstream of ${seed} in the supply graph. Its case rests on its own survival.`
+    ? `No qualifying downstream path from ${seed} at this depth and cutoff. The case rests on its own survival.`
     : `${c.exposed_count} businesses downstream (${hops}). Showing the ${shown} strongest paths; ` +
       `thicker lines are stronger links. ${c.local_alternatives_same_industry} other local businesses share its industry.`;
   return h("figure", { class: "line-map" }, svg, h("figcaption", {}, caption));
@@ -351,6 +351,7 @@ async function select(id) {
     pane.replaceChildren(...renderCase(a, c));
     animateLines(pane);
   } catch (e) {
+    if (state.selected !== id) return;
     pane.replaceChildren(...caseHeader(a),
       h("p", { class: "case-error" }, `Couldn't trace this cascade: ${e.message}. Check the grant desk server log.`));
   }

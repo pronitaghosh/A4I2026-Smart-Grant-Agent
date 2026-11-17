@@ -1,5 +1,6 @@
-"""The judgment layer. No BigQuery. Units: expected business closures avoided."""
+"""Optimize need-weighted protection; report unweighted modeled closures avoided."""
 from dataclasses import dataclass, field
+from math import isfinite
 
 ASSUMPTIONS = {
     "STRONG_LINK": 0.05,        # a supplier worth >=5c per $ of the buyer's output = full-strength dependency
@@ -64,24 +65,32 @@ def need_mult(a: Applicant, corridor_poverty: float | None, A: dict) -> float:
 
 
 def portfolio_value(apps, awards, corridor_poverty, A=ASSUMPTIONS) -> float:
-    """Expected closures avoided by a whole set of awards. A downstream business exposed to two
-    funded applicants is counted once (at its best protection), not twice."""
-    total, best = 0.0, {}
+    """Need-weighted protection, taking the strongest protection per business.
+    NEED_WEIGHT=0 reports unweighted modeled closures avoided; overlap uses max."""
+    best = {}
     for a in apps:
         dp = risk_reduction(a, awards.get(a.business_id, 0.0), A)
         if dp == 0:
             continue
         nm = need_mult(a, corridor_poverty, A)
-        total += dp * nm                                  # the applicant itself survives
+        best[a.business_id] = max(best.get(a.business_id, 0.0), dp * nm)
         for x, (w, *_rest) in a.exposed.items():          # ...and so might what it supplies
             c = dp * A["CONTAGION"] * uniqueness(a) * w * nm
             best[x] = max(best.get(x, 0.0), c)
-    return total + sum(best.values())
+    return sum(best.values())
 
 
 def allocate(apps, budget, corridor_poverty, A=ASSUMPTIONS):
     """Greedy: repeatedly give the next slice of money to whoever buys the most
     closures-avoided per dollar, until money or worthwhile moves run out."""
+    if not isfinite(budget) or budget < 0:
+        raise ValueError("Budget must be finite and nonnegative.")
+    ids = [a.business_id for a in apps]
+    locations = [(a.name.strip().casefold(), a.address.strip().casefold()) for a in apps]
+    if len(set(ids)) != len(ids) or len(set(locations)) != len(locations):
+        raise ValueError("Duplicate applicant registration; resolve before allocating.")
+    if any(not isfinite(a.requested) or a.requested <= 0 for a in apps):
+        raise ValueError("Requests must be finite and positive.")
     awards = {a.business_id: 0.0 for a in apps}
     spent = 0.0
     while True:
@@ -152,14 +161,20 @@ def value_split(a: Applicant, award: float, corridor_poverty, A: dict = ASSUMPTI
 
 def recommend(apps, budget, corridor_poverty, A=ASSUMPTIONS) -> dict:
     awards, spent = allocate(apps, budget, corridor_poverty, A)
-    total = portfolio_value(apps, awards, corridor_poverty, A)
+    priority = portfolio_value(apps, awards, corridor_poverty, A)
+    raw = {**A, "NEED_WEIGHT": 0.0}
+    total = portfolio_value(apps, awards, corridor_poverty, raw)
 
     rows = []
     for a in apps:
         aw = awards[a.business_id]
-        lose_if_dropped = total - portfolio_value(apps, {**awards, a.business_id: 0.0}, corridor_poverty, A)
-        solo = portfolio_value([a], {a.business_id: a.requested}, corridor_poverty, A)
-        own_v, casc_v = value_split(a, aw, corridor_poverty, A)
+        without = {**awards, a.business_id: 0.0}
+        lose_if_dropped = total - portfolio_value(apps, without, corridor_poverty, raw)
+        priority_loss = priority - portfolio_value(apps, without, corridor_poverty, A)
+        solo = portfolio_value([a], {a.business_id: a.requested}, corridor_poverty, raw)
+        priority_solo = portfolio_value([a], {a.business_id: a.requested}, corridor_poverty, A)
+        # Unweighted (raw), like the closures reported above; the audit uses the own/cascade ratio.
+        own_v, casc_v = value_split(a, aw, corridor_poverty, raw)
         rows.append({
             "business_id": a.business_id, "name": a.name, "address": a.address,
             "own_value": round(own_v, 4), "cascade_value": round(casc_v, 4),
@@ -171,11 +186,13 @@ def recommend(apps, budget, corridor_poverty, A=ASSUMPTIONS) -> dict:
             "downstream_exposed": len(a.exposed),
             "closures_avoided_by_this_grant": round(lose_if_dropped, 3),
             "closures_avoided_per_10k_if_fully_funded": round(10000 * solo / a.requested, 3) if a.requested else 0,
+            "priority_loss": priority_loss,
+            "priority_per_10k": 10000 * priority_solo / a.requested,
             "reasons": _reasons(a, aw, corridor_poverty, A),
         })
-    funded = sorted([r for r in rows if r["award"] > 0], key=lambda r: -r["closures_avoided_by_this_grant"])
+    funded = sorted([r for r in rows if r["award"] > 0], key=lambda r: -r["priority_loss"])
     unfunded = sorted([r for r in rows if r["award"] == 0],
-                      key=lambda r: -r["closures_avoided_per_10k_if_fully_funded"])
+                      key=lambda r: -r["priority_per_10k"])
 
     scen = {}
     for name, override in SENSITIVITY.items():
@@ -188,6 +205,7 @@ def recommend(apps, budget, corridor_poverty, A=ASSUMPTIONS) -> dict:
     return {
         "budget": budget, "allocated": spent, "unallocated": budget - spent,
         "expected_closures_avoided_total": round(total, 3),
+        "need_weighted_priority_total": round(priority, 3),
         "recommended": funded,
         "not_funded": unfunded,
         # If everyone got something, the "runner-up" is the grant closest to being cut.

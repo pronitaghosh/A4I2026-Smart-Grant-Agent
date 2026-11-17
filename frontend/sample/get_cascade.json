@@ -1,506 +1,529 @@
 {
- "meta": {
-  "captured": "2026-11-17",
-  "source": "agent/BUILD_GUIDE.md allocator on live a4i_econ tables",
-  "corridor_poverty": 0.21476030177160027
- },
- "get_cascade": {
-  "211": {
-   "business": {
-    "business_id": "211",
-    "name": "San Francisco Proper Hotel - Villon",
-    "address": "1100 Market St",
-    "naics4": "721"
-   },
-   "depth": 2,
-   "exposed_count": 0,
-   "by_hop": {
-    "1": 0,
-    "2": 0
-   },
-   "local_alternatives_same_industry": 3,
-   "is_leaf": true,
-   "paths": [],
-   "evidence_note": "Businesses, addresses, industries, SBA loans and tract demographics are real. Supply links are MODELED: the industry-to-industry purchase rates are published by the U.S. Bureau of Economic Analysis, but which specific business buys from which is our assignment (industry match + walking distance). Applicant financials are illustrative."
+  "meta": {
+    "captured": "2026-11-17",
+    "source": "agent/grant_agent tools (with review fixes) on live a4i_econ tables",
+    "corridor_poverty": 0.21476030177160027
   },
-  "92": {
-   "business": {
-    "business_id": "92",
-    "name": "Oak Tree Hotel",
-    "address": "45 6th St",
-    "naics4": "7211"
-   },
-   "depth": 2,
-   "exposed_count": 0,
-   "by_hop": {
-    "1": 0,
-    "2": 0
-   },
-   "local_alternatives_same_industry": 9,
-   "is_leaf": true,
-   "paths": [],
-   "evidence_note": "Businesses, addresses, industries, SBA loans and tract demographics are real. Supply links are MODELED: the industry-to-industry purchase rates are published by the U.S. Bureau of Economic Analysis, but which specific business buys from which is our assignment (industry match + walking distance). Applicant financials are illustrative."
-  },
-  "85": {
-   "business": {
-    "business_id": "85",
-    "name": "Supremo Pizza Inc",
-    "address": "87 6th St",
-    "naics4": "7225"
-   },
-   "depth": 2,
-   "exposed_count": 1,
-   "by_hop": {
-    "1": 1,
-    "2": 0
-   },
-   "local_alternatives_same_industry": 28,
-   "is_leaf": false,
-   "paths": [
-    {
-     "exposed_id": "92",
-     "hops": 1,
-     "weight": 0.711,
-     "path": "Supremo Pizza Inc \u2192 Oak Tree Hotel",
-     "link_intensities": [
-      0.0356
-     ]
+  "get_cascade": {
+    "16": {
+      "business": {
+        "business_id": "16",
+        "name": "Sour Flour",
+        "address": "1182 Market St 415",
+        "naics4": "3118"
+      },
+      "depth": 2,
+      "exposed_count": 97,
+      "min_link": 0.02,
+      "traversal": "GRAPH a4i_econ.LocalEconomy MATCH p = (seed:Business)-[:Supplies]->{1,2}(x:Business)",
+      "by_hop": {
+        "1": 69,
+        "2": 28
+      },
+      "local_alternatives_same_industry": 0,
+      "is_leaf": false,
+      "paths": [
+        {
+          "exposed_id": "126",
+          "hops": 1,
+          "weight": 1.0,
+          "path": "Sour Flour → The Melt",
+          "link_intensities": [
+            0.0961
+          ]
+        },
+        {
+          "exposed_id": "136",
+          "hops": 1,
+          "weight": 1.0,
+          "path": "Sour Flour → Merchant Roots",
+          "link_intensities": [
+            0.0961
+          ]
+        },
+        {
+          "exposed_id": "191",
+          "hops": 1,
+          "weight": 1.0,
+          "path": "Sour Flour → Canteen @ Wework 1460 Mission Street",
+          "link_intensities": [
+            0.0961
+          ]
+        },
+        {
+          "exposed_id": "24",
+          "hops": 1,
+          "weight": 1.0,
+          "path": "Sour Flour → Cumaica Coffee",
+          "link_intensities": [
+            0.208
+          ]
+        },
+        {
+          "exposed_id": "65",
+          "hops": 1,
+          "weight": 1.0,
+          "path": "Sour Flour → The Bite",
+          "link_intensities": [
+            0.0961
+          ]
+        },
+        {
+          "exposed_id": "106",
+          "hops": 1,
+          "weight": 1.0,
+          "path": "Sour Flour → Blue Bottle Coffee LLC",
+          "link_intensities": [
+            0.0961
+          ]
+        },
+        {
+          "exposed_id": "137",
+          "hops": 1,
+          "weight": 1.0,
+          "path": "Sour Flour → Canteen",
+          "link_intensities": [
+            0.0961
+          ]
+        },
+        {
+          "exposed_id": "28",
+          "hops": 1,
+          "weight": 1.0,
+          "path": "Sour Flour → Mercy Housing Ca 50 A Ca Lp",
+          "link_intensities": [
+            0.0591
+          ]
+        },
+        {
+          "exposed_id": "141",
+          "hops": 1,
+          "weight": 1.0,
+          "path": "Sour Flour → Binis Kitchen LLC",
+          "link_intensities": [
+            0.0961
+          ]
+        },
+        {
+          "exposed_id": "38",
+          "hops": 1,
+          "weight": 1.0,
+          "path": "Sour Flour → 1100 Ocean Avenue Lp",
+          "link_intensities": [
+            0.0591
+          ]
+        },
+        {
+          "exposed_id": "118",
+          "hops": 1,
+          "weight": 1.0,
+          "path": "Sour Flour → 54 Mint-Winebar",
+          "link_intensities": [
+            0.0961
+          ]
+        },
+        {
+          "exposed_id": "11",
+          "hops": 1,
+          "weight": 1.0,
+          "path": "Sour Flour → Honeybee Foods Corporation",
+          "link_intensities": [
+            0.0961
+          ]
+        },
+        {
+          "exposed_id": "45",
+          "hops": 1,
+          "weight": 1.0,
+          "path": "Sour Flour → Sumfer Market Sf LLC",
+          "link_intensities": [
+            0.0961
+          ]
+        },
+        {
+          "exposed_id": "227",
+          "hops": 1,
+          "weight": 1.0,
+          "path": "Sour Flour → The Pawn Shop",
+          "link_intensities": [
+            0.0961
+          ]
+        },
+        {
+          "exposed_id": "161",
+          "hops": 2,
+          "weight": 0.356,
+          "path": "Sour Flour → Square Pie Guys → Yotel San Francisco",
+          "link_intensities": [
+            0.0961,
+            0.0356
+          ]
+        }
+      ],
+      "evidence_note": "Businesses, addresses, industries, SBA loans and tract demographics are real. Supply links are MODELED: the industry-to-industry purchase rates are published by the U.S. Bureau of Economic Analysis, but which specific business buys from which is our assignment (industry match + walking distance). Applicant financials are illustrative."
+    },
+    "73": {
+      "business": {
+        "business_id": "73",
+        "name": "Eddy St Bodega Inc",
+        "address": "200 Eddy St",
+        "naics4": "4451"
+      },
+      "depth": 2,
+      "exposed_count": 0,
+      "min_link": 0.02,
+      "traversal": "GRAPH a4i_econ.LocalEconomy MATCH p = (seed:Business)-[:Supplies]->{1,2}(x:Business)",
+      "by_hop": {
+        "1": 0,
+        "2": 0
+      },
+      "local_alternatives_same_industry": 12,
+      "is_leaf": true,
+      "paths": [],
+      "evidence_note": "Businesses, addresses, industries, SBA loans and tract demographics are real. Supply links are MODELED: the industry-to-industry purchase rates are published by the U.S. Bureau of Economic Analysis, but which specific business buys from which is our assignment (industry match + walking distance). Applicant financials are illustrative."
+    },
+    "135": {
+      "business": {
+        "business_id": "135",
+        "name": "Honeybee Foods Corporation Dba Jollibee",
+        "address": "934 Market St",
+        "naics4": "7225"
+      },
+      "depth": 2,
+      "exposed_count": 1,
+      "min_link": 0.02,
+      "traversal": "GRAPH a4i_econ.LocalEconomy MATCH p = (seed:Business)-[:Supplies]->{1,2}(x:Business)",
+      "by_hop": {
+        "1": 1,
+        "2": 0
+      },
+      "local_alternatives_same_industry": 28,
+      "is_leaf": false,
+      "paths": [
+        {
+          "exposed_id": "123",
+          "hops": 1,
+          "weight": 0.711,
+          "path": "Honeybee Foods Corporation Dba Jollibee → Warfield Hotel Inc",
+          "link_intensities": [
+            0.0356
+          ]
+        }
+      ],
+      "evidence_note": "Businesses, addresses, industries, SBA loans and tract demographics are real. Supply links are MODELED: the industry-to-industry purchase rates are published by the U.S. Bureau of Economic Analysis, but which specific business buys from which is our assignment (industry match + walking distance). Applicant financials are illustrative."
+    },
+    "106": {
+      "business": {
+        "business_id": "106",
+        "name": "Blue Bottle Coffee LLC",
+        "address": "66 Mint St",
+        "naics4": "7225"
+      },
+      "depth": 2,
+      "exposed_count": 1,
+      "min_link": 0.02,
+      "traversal": "GRAPH a4i_econ.LocalEconomy MATCH p = (seed:Business)-[:Supplies]->{1,2}(x:Business)",
+      "by_hop": {
+        "1": 1,
+        "2": 0
+      },
+      "local_alternatives_same_industry": 28,
+      "is_leaf": false,
+      "paths": [
+        {
+          "exposed_id": "133",
+          "hops": 1,
+          "weight": 0.711,
+          "path": "Blue Bottle Coffee LLC → Hampton Inn San Francisco Downtown Convention Center",
+          "link_intensities": [
+            0.0356
+          ]
+        }
+      ],
+      "evidence_note": "Businesses, addresses, industries, SBA loans and tract demographics are real. Supply links are MODELED: the industry-to-industry purchase rates are published by the U.S. Bureau of Economic Analysis, but which specific business buys from which is our assignment (industry match + walking distance). Applicant financials are illustrative."
+    },
+    "211": {
+      "business": {
+        "business_id": "211",
+        "name": "San Francisco Proper Hotel - Villon",
+        "address": "1100 Market St",
+        "naics4": "721"
+      },
+      "depth": 2,
+      "exposed_count": 0,
+      "min_link": 0.02,
+      "traversal": "GRAPH a4i_econ.LocalEconomy MATCH p = (seed:Business)-[:Supplies]->{1,2}(x:Business)",
+      "by_hop": {
+        "1": 0,
+        "2": 0
+      },
+      "local_alternatives_same_industry": 3,
+      "is_leaf": true,
+      "paths": [],
+      "evidence_note": "Businesses, addresses, industries, SBA loans and tract demographics are real. Supply links are MODELED: the industry-to-industry purchase rates are published by the U.S. Bureau of Economic Analysis, but which specific business buys from which is our assignment (industry match + walking distance). Applicant financials are illustrative."
+    },
+    "114": {
+      "business": {
+        "business_id": "114",
+        "name": "The Warfield Theater",
+        "address": "982 Market St",
+        "naics4": "7113"
+      },
+      "depth": 2,
+      "exposed_count": 7,
+      "min_link": 0.02,
+      "traversal": "GRAPH a4i_econ.LocalEconomy MATCH p = (seed:Business)-[:Supplies]->{1,2}(x:Business)",
+      "by_hop": {
+        "1": 5,
+        "2": 2
+      },
+      "local_alternatives_same_industry": 2,
+      "is_leaf": false,
+      "paths": [
+        {
+          "exposed_id": "79",
+          "hops": 1,
+          "weight": 1.0,
+          "path": "The Warfield Theater → New Performance Traditions Paul Dresher Ensemble",
+          "link_intensities": [
+            0.1291
+          ]
+        },
+        {
+          "exposed_id": "10",
+          "hops": 1,
+          "weight": 1.0,
+          "path": "The Warfield Theater → Shn",
+          "link_intensities": [
+            0.1291
+          ]
+        },
+        {
+          "exposed_id": "155",
+          "hops": 1,
+          "weight": 1.0,
+          "path": "The Warfield Theater → Golden Gate Theatre",
+          "link_intensities": [
+            0.1291
+          ]
+        },
+        {
+          "exposed_id": "192",
+          "hops": 1,
+          "weight": 1.0,
+          "path": "The Warfield Theater → Orpheum Theatre",
+          "link_intensities": [
+            0.1291
+          ]
+        },
+        {
+          "exposed_id": "127",
+          "hops": 1,
+          "weight": 1.0,
+          "path": "The Warfield Theater → 200 Channels LLC",
+          "link_intensities": [
+            0.1291
+          ]
+        },
+        {
+          "exposed_id": "202",
+          "hops": 2,
+          "weight": 0.5,
+          "path": "The Warfield Theater → 200 Channels LLC → 1277 Mission",
+          "link_intensities": [
+            0.1291,
+            0.1291
+          ]
+        },
+        {
+          "exposed_id": "66",
+          "hops": 2,
+          "weight": 0.5,
+          "path": "The Warfield Theater → Orpheum Theatre → Non Plus Ultra",
+          "link_intensities": [
+            0.1291,
+            0.1291
+          ]
+        }
+      ],
+      "evidence_note": "Businesses, addresses, industries, SBA loans and tract demographics are real. Supply links are MODELED: the industry-to-industry purchase rates are published by the U.S. Bureau of Economic Analysis, but which specific business buys from which is our assignment (industry match + walking distance). Applicant financials are illustrative."
+    },
+    "92": {
+      "business": {
+        "business_id": "92",
+        "name": "Oak Tree Hotel",
+        "address": "45 6th St",
+        "naics4": "7211"
+      },
+      "depth": 2,
+      "exposed_count": 0,
+      "min_link": 0.02,
+      "traversal": "GRAPH a4i_econ.LocalEconomy MATCH p = (seed:Business)-[:Supplies]->{1,2}(x:Business)",
+      "by_hop": {
+        "1": 0,
+        "2": 0
+      },
+      "local_alternatives_same_industry": 9,
+      "is_leaf": true,
+      "paths": [],
+      "evidence_note": "Businesses, addresses, industries, SBA loans and tract demographics are real. Supply links are MODELED: the industry-to-industry purchase rates are published by the U.S. Bureau of Economic Analysis, but which specific business buys from which is our assignment (industry match + walking distance). Applicant financials are illustrative."
+    },
+    "185": {
+      "business": {
+        "business_id": "185",
+        "name": "Soliome Inc",
+        "address": "479 Jessie St",
+        "naics4": "325"
+      },
+      "depth": 2,
+      "exposed_count": 0,
+      "min_link": 0.02,
+      "traversal": "GRAPH a4i_econ.LocalEconomy MATCH p = (seed:Business)-[:Supplies]->{1,2}(x:Business)",
+      "by_hop": {
+        "1": 0,
+        "2": 0
+      },
+      "local_alternatives_same_industry": 0,
+      "is_leaf": true,
+      "paths": [],
+      "evidence_note": "Businesses, addresses, industries, SBA loans and tract demographics are real. Supply links are MODELED: the industry-to-industry purchase rates are published by the U.S. Bureau of Economic Analysis, but which specific business buys from which is our assignment (industry match + walking distance). Applicant financials are illustrative."
+    },
+    "66": {
+      "business": {
+        "business_id": "66",
+        "name": "Non Plus Ultra",
+        "address": "88 5th St",
+        "naics4": "7113"
+      },
+      "depth": 2,
+      "exposed_count": 6,
+      "min_link": 0.02,
+      "traversal": "GRAPH a4i_econ.LocalEconomy MATCH p = (seed:Business)-[:Supplies]->{1,2}(x:Business)",
+      "by_hop": {
+        "1": 4,
+        "2": 2
+      },
+      "local_alternatives_same_industry": 2,
+      "is_leaf": false,
+      "paths": [
+        {
+          "exposed_id": "155",
+          "hops": 1,
+          "weight": 1.0,
+          "path": "Non Plus Ultra → Golden Gate Theatre",
+          "link_intensities": [
+            0.1291
+          ]
+        },
+        {
+          "exposed_id": "192",
+          "hops": 1,
+          "weight": 1.0,
+          "path": "Non Plus Ultra → Orpheum Theatre",
+          "link_intensities": [
+            0.1291
+          ]
+        },
+        {
+          "exposed_id": "127",
+          "hops": 1,
+          "weight": 1.0,
+          "path": "Non Plus Ultra → 200 Channels LLC",
+          "link_intensities": [
+            0.1291
+          ]
+        },
+        {
+          "exposed_id": "10",
+          "hops": 1,
+          "weight": 1.0,
+          "path": "Non Plus Ultra → Shn",
+          "link_intensities": [
+            0.1291
+          ]
+        },
+        {
+          "exposed_id": "202",
+          "hops": 2,
+          "weight": 0.5,
+          "path": "Non Plus Ultra → Golden Gate Theatre → 1277 Mission",
+          "link_intensities": [
+            0.1291,
+            0.1291
+          ]
+        },
+        {
+          "exposed_id": "114",
+          "hops": 2,
+          "weight": 0.5,
+          "path": "Non Plus Ultra → Orpheum Theatre → The Warfield Theater",
+          "link_intensities": [
+            0.1291,
+            0.1291
+          ]
+        }
+      ],
+      "evidence_note": "Businesses, addresses, industries, SBA loans and tract demographics are real. Supply links are MODELED: the industry-to-industry purchase rates are published by the U.S. Bureau of Economic Analysis, but which specific business buys from which is our assignment (industry match + walking distance). Applicant financials are illustrative."
+    },
+    "85": {
+      "business": {
+        "business_id": "85",
+        "name": "Supremo Pizza Inc",
+        "address": "87 6th St",
+        "naics4": "7225"
+      },
+      "depth": 2,
+      "exposed_count": 1,
+      "min_link": 0.02,
+      "traversal": "GRAPH a4i_econ.LocalEconomy MATCH p = (seed:Business)-[:Supplies]->{1,2}(x:Business)",
+      "by_hop": {
+        "1": 1,
+        "2": 0
+      },
+      "local_alternatives_same_industry": 28,
+      "is_leaf": false,
+      "paths": [
+        {
+          "exposed_id": "92",
+          "hops": 1,
+          "weight": 0.711,
+          "path": "Supremo Pizza Inc → Oak Tree Hotel",
+          "link_intensities": [
+            0.0356
+          ]
+        }
+      ],
+      "evidence_note": "Businesses, addresses, industries, SBA loans and tract demographics are real. Supply links are MODELED: the industry-to-industry purchase rates are published by the U.S. Bureau of Economic Analysis, but which specific business buys from which is our assignment (industry match + walking distance). Applicant financials are illustrative."
+    },
+    "171": {
+      "business": {
+        "business_id": "171",
+        "name": "Tradespace",
+        "address": "1161 Mission St",
+        "naics4": "5182"
+      },
+      "depth": 2,
+      "exposed_count": 1,
+      "min_link": 0.02,
+      "traversal": "GRAPH a4i_econ.LocalEconomy MATCH p = (seed:Business)-[:Supplies]->{1,2}(x:Business)",
+      "by_hop": {
+        "1": 1,
+        "2": 0
+      },
+      "local_alternatives_same_industry": 0,
+      "is_leaf": false,
+      "paths": [
+        {
+          "exposed_id": "64",
+          "hops": 1,
+          "weight": 0.417,
+          "path": "Tradespace → 415 Ebikes",
+          "link_intensities": [
+            0.0209
+          ]
+        }
+      ],
+      "evidence_note": "Businesses, addresses, industries, SBA loans and tract demographics are real. Supply links are MODELED: the industry-to-industry purchase rates are published by the U.S. Bureau of Economic Analysis, but which specific business buys from which is our assignment (industry match + walking distance). Applicant financials are illustrative."
     }
-   ],
-   "evidence_note": "Businesses, addresses, industries, SBA loans and tract demographics are real. Supply links are MODELED: the industry-to-industry purchase rates are published by the U.S. Bureau of Economic Analysis, but which specific business buys from which is our assignment (industry match + walking distance). Applicant financials are illustrative."
-  },
-  "66": {
-   "business": {
-    "business_id": "66",
-    "name": "Non Plus Ultra",
-    "address": "88 5th St",
-    "naics4": "7113"
-   },
-   "depth": 2,
-   "exposed_count": 6,
-   "by_hop": {
-    "1": 4,
-    "2": 2
-   },
-   "local_alternatives_same_industry": 2,
-   "is_leaf": false,
-   "paths": [
-    {
-     "exposed_id": "155",
-     "hops": 1,
-     "weight": 1.0,
-     "path": "Non Plus Ultra \u2192 Golden Gate Theatre",
-     "link_intensities": [
-      0.1291
-     ]
-    },
-    {
-     "exposed_id": "192",
-     "hops": 1,
-     "weight": 1.0,
-     "path": "Non Plus Ultra \u2192 Orpheum Theatre",
-     "link_intensities": [
-      0.1291
-     ]
-    },
-    {
-     "exposed_id": "10",
-     "hops": 1,
-     "weight": 1.0,
-     "path": "Non Plus Ultra \u2192 Shn",
-     "link_intensities": [
-      0.1291
-     ]
-    },
-    {
-     "exposed_id": "127",
-     "hops": 1,
-     "weight": 1.0,
-     "path": "Non Plus Ultra \u2192 200 Channels LLC",
-     "link_intensities": [
-      0.1291
-     ]
-    },
-    {
-     "exposed_id": "202",
-     "hops": 2,
-     "weight": 0.5,
-     "path": "Non Plus Ultra \u2192 200 Channels LLC \u2192 1277 Mission",
-     "link_intensities": [
-      0.1291,
-      0.1291
-     ]
-    },
-    {
-     "exposed_id": "114",
-     "hops": 2,
-     "weight": 0.5,
-     "path": "Non Plus Ultra \u2192 Shn \u2192 The Warfield Theater",
-     "link_intensities": [
-      0.1291,
-      0.1291
-     ]
-    }
-   ],
-   "evidence_note": "Businesses, addresses, industries, SBA loans and tract demographics are real. Supply links are MODELED: the industry-to-industry purchase rates are published by the U.S. Bureau of Economic Analysis, but which specific business buys from which is our assignment (industry match + walking distance). Applicant financials are illustrative."
-  },
-  "185": {
-   "business": {
-    "business_id": "185",
-    "name": "Soliome Inc",
-    "address": "479 Jessie St",
-    "naics4": "325"
-   },
-   "depth": 2,
-   "exposed_count": 0,
-   "by_hop": {
-    "1": 0,
-    "2": 0
-   },
-   "local_alternatives_same_industry": 0,
-   "is_leaf": true,
-   "paths": [],
-   "evidence_note": "Businesses, addresses, industries, SBA loans and tract demographics are real. Supply links are MODELED: the industry-to-industry purchase rates are published by the U.S. Bureau of Economic Analysis, but which specific business buys from which is our assignment (industry match + walking distance). Applicant financials are illustrative."
-  },
-  "114": {
-   "business": {
-    "business_id": "114",
-    "name": "The Warfield Theater",
-    "address": "982 Market St",
-    "naics4": "7113"
-   },
-   "depth": 2,
-   "exposed_count": 7,
-   "by_hop": {
-    "1": 5,
-    "2": 2
-   },
-   "local_alternatives_same_industry": 2,
-   "is_leaf": false,
-   "paths": [
-    {
-     "exposed_id": "127",
-     "hops": 1,
-     "weight": 1.0,
-     "path": "The Warfield Theater \u2192 200 Channels LLC",
-     "link_intensities": [
-      0.1291
-     ]
-    },
-    {
-     "exposed_id": "79",
-     "hops": 1,
-     "weight": 1.0,
-     "path": "The Warfield Theater \u2192 New Performance Traditions Paul Dresher Ensemble",
-     "link_intensities": [
-      0.1291
-     ]
-    },
-    {
-     "exposed_id": "155",
-     "hops": 1,
-     "weight": 1.0,
-     "path": "The Warfield Theater \u2192 Golden Gate Theatre",
-     "link_intensities": [
-      0.1291
-     ]
-    },
-    {
-     "exposed_id": "192",
-     "hops": 1,
-     "weight": 1.0,
-     "path": "The Warfield Theater \u2192 Orpheum Theatre",
-     "link_intensities": [
-      0.1291
-     ]
-    },
-    {
-     "exposed_id": "10",
-     "hops": 1,
-     "weight": 1.0,
-     "path": "The Warfield Theater \u2192 Shn",
-     "link_intensities": [
-      0.1291
-     ]
-    },
-    {
-     "exposed_id": "202",
-     "hops": 2,
-     "weight": 0.5,
-     "path": "The Warfield Theater \u2192 Orpheum Theatre \u2192 1277 Mission",
-     "link_intensities": [
-      0.1291,
-      0.1291
-     ]
-    },
-    {
-     "exposed_id": "66",
-     "hops": 2,
-     "weight": 0.5,
-     "path": "The Warfield Theater \u2192 Shn \u2192 Non Plus Ultra",
-     "link_intensities": [
-      0.1291,
-      0.1291
-     ]
-    }
-   ],
-   "evidence_note": "Businesses, addresses, industries, SBA loans and tract demographics are real. Supply links are MODELED: the industry-to-industry purchase rates are published by the U.S. Bureau of Economic Analysis, but which specific business buys from which is our assignment (industry match + walking distance). Applicant financials are illustrative."
-  },
-  "106": {
-   "business": {
-    "business_id": "106",
-    "name": "Blue Bottle Coffee LLC",
-    "address": "66 Mint St",
-    "naics4": "7225"
-   },
-   "depth": 2,
-   "exposed_count": 1,
-   "by_hop": {
-    "1": 1,
-    "2": 0
-   },
-   "local_alternatives_same_industry": 28,
-   "is_leaf": false,
-   "paths": [
-    {
-     "exposed_id": "133",
-     "hops": 1,
-     "weight": 0.711,
-     "path": "Blue Bottle Coffee LLC \u2192 Hampton Inn San Francisco Downtown Convention Center",
-     "link_intensities": [
-      0.0356
-     ]
-    }
-   ],
-   "evidence_note": "Businesses, addresses, industries, SBA loans and tract demographics are real. Supply links are MODELED: the industry-to-industry purchase rates are published by the U.S. Bureau of Economic Analysis, but which specific business buys from which is our assignment (industry match + walking distance). Applicant financials are illustrative."
-  },
-  "73": {
-   "business": {
-    "business_id": "73",
-    "name": "Eddy St Bodega Inc",
-    "address": "200 Eddy St",
-    "naics4": "4451"
-   },
-   "depth": 2,
-   "exposed_count": 0,
-   "by_hop": {
-    "1": 0,
-    "2": 0
-   },
-   "local_alternatives_same_industry": 12,
-   "is_leaf": true,
-   "paths": [],
-   "evidence_note": "Businesses, addresses, industries, SBA loans and tract demographics are real. Supply links are MODELED: the industry-to-industry purchase rates are published by the U.S. Bureau of Economic Analysis, but which specific business buys from which is our assignment (industry match + walking distance). Applicant financials are illustrative."
-  },
-  "135": {
-   "business": {
-    "business_id": "135",
-    "name": "Honeybee Foods Corporation Dba Jollibee",
-    "address": "934 Market St",
-    "naics4": "7225"
-   },
-   "depth": 2,
-   "exposed_count": 1,
-   "by_hop": {
-    "1": 1,
-    "2": 0
-   },
-   "local_alternatives_same_industry": 28,
-   "is_leaf": false,
-   "paths": [
-    {
-     "exposed_id": "123",
-     "hops": 1,
-     "weight": 0.711,
-     "path": "Honeybee Foods Corporation Dba Jollibee \u2192 Warfield Hotel Inc",
-     "link_intensities": [
-      0.0356
-     ]
-    }
-   ],
-   "evidence_note": "Businesses, addresses, industries, SBA loans and tract demographics are real. Supply links are MODELED: the industry-to-industry purchase rates are published by the U.S. Bureau of Economic Analysis, but which specific business buys from which is our assignment (industry match + walking distance). Applicant financials are illustrative."
-  },
-  "171": {
-   "business": {
-    "business_id": "171",
-    "name": "Tradespace",
-    "address": "1161 Mission St",
-    "naics4": "5182"
-   },
-   "depth": 2,
-   "exposed_count": 1,
-   "by_hop": {
-    "1": 1,
-    "2": 0
-   },
-   "local_alternatives_same_industry": 0,
-   "is_leaf": false,
-   "paths": [
-    {
-     "exposed_id": "64",
-     "hops": 1,
-     "weight": 0.417,
-     "path": "Tradespace \u2192 415 Ebikes",
-     "link_intensities": [
-      0.0209
-     ]
-    }
-   ],
-   "evidence_note": "Businesses, addresses, industries, SBA loans and tract demographics are real. Supply links are MODELED: the industry-to-industry purchase rates are published by the U.S. Bureau of Economic Analysis, but which specific business buys from which is our assignment (industry match + walking distance). Applicant financials are illustrative."
-  },
-  "16": {
-   "business": {
-    "business_id": "16",
-    "name": "Sour Flour",
-    "address": "1182 Market St 415",
-    "naics4": "3118"
-   },
-   "depth": 2,
-   "exposed_count": 97,
-   "by_hop": {
-    "1": 69,
-    "2": 28
-   },
-   "local_alternatives_same_industry": 0,
-   "is_leaf": false,
-   "paths": [
-    {
-     "exposed_id": "144",
-     "hops": 1,
-     "weight": 1.0,
-     "path": "Sour Flour \u2192 The Function",
-     "link_intensities": [
-      0.0961
-     ]
-    },
-    {
-     "exposed_id": "85",
-     "hops": 1,
-     "weight": 1.0,
-     "path": "Sour Flour \u2192 Supremo Pizza Inc",
-     "link_intensities": [
-      0.0961
-     ]
-    },
-    {
-     "exposed_id": "163",
-     "hops": 1,
-     "weight": 1.0,
-     "path": "Sour Flour \u2192 Washburn Housing Corporation",
-     "link_intensities": [
-      0.0591
-     ]
-    },
-    {
-     "exposed_id": "52",
-     "hops": 1,
-     "weight": 1.0,
-     "path": "Sour Flour \u2192 Miss Saigon LLC",
-     "link_intensities": [
-      0.0961
-     ]
-    },
-    {
-     "exposed_id": "137",
-     "hops": 1,
-     "weight": 1.0,
-     "path": "Sour Flour \u2192 Canteen",
-     "link_intensities": [
-      0.0961
-     ]
-    },
-    {
-     "exposed_id": "207",
-     "hops": 1,
-     "weight": 1.0,
-     "path": "Sour Flour \u2192 Crazy Horse",
-     "link_intensities": [
-      0.0961
-     ]
-    },
-    {
-     "exposed_id": "14",
-     "hops": 1,
-     "weight": 1.0,
-     "path": "Sour Flour \u2192 Halal Modena Pizza",
-     "link_intensities": [
-      0.0961
-     ]
-    },
-    {
-     "exposed_id": "106",
-     "hops": 1,
-     "weight": 1.0,
-     "path": "Sour Flour \u2192 Blue Bottle Coffee LLC",
-     "link_intensities": [
-      0.0961
-     ]
-    },
-    {
-     "exposed_id": "138",
-     "hops": 1,
-     "weight": 1.0,
-     "path": "Sour Flour \u2192 Club Omg!",
-     "link_intensities": [
-      0.0961
-     ]
-    },
-    {
-     "exposed_id": "168",
-     "hops": 1,
-     "weight": 1.0,
-     "path": "Sour Flour \u2192 Corporation For Supportive Housing",
-     "link_intensities": [
-      0.0591
-     ]
-    },
-    {
-     "exposed_id": "65",
-     "hops": 1,
-     "weight": 1.0,
-     "path": "Sour Flour \u2192 The Bite",
-     "link_intensities": [
-      0.0961
-     ]
-    },
-    {
-     "exposed_id": "68",
-     "hops": 1,
-     "weight": 1.0,
-     "path": "Sour Flour \u2192 Foodworks",
-     "link_intensities": [
-      0.0961
-     ]
-    },
-    {
-     "exposed_id": "83",
-     "hops": 1,
-     "weight": 1.0,
-     "path": "Sour Flour \u2192 Velora Cafe Inc",
-     "link_intensities": [
-      0.0961
-     ]
-    },
-    {
-     "exposed_id": "109",
-     "hops": 1,
-     "weight": 1.0,
-     "path": "Sour Flour \u2192 Extraveganza Eatery",
-     "link_intensities": [
-      0.0961
-     ]
-    },
-    {
-     "exposed_id": "117",
-     "hops": 1,
-     "weight": 1.0,
-     "path": "Sour Flour \u2192 Foodworks",
-     "link_intensities": [
-      0.0961
-     ]
-    }
-   ],
-   "evidence_note": "Businesses, addresses, industries, SBA loans and tract demographics are real. Supply links are MODELED: the industry-to-industry purchase rates are published by the U.S. Bureau of Economic Analysis, but which specific business buys from which is our assignment (industry match + walking distance). Applicant financials are illustrative."
   }
- }
 }
