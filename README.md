@@ -131,7 +131,7 @@ flowchart LR
     officer([Grant officer]) --> desk["<b>Grant desk</b><br/>FastAPI + web UI<br/>frontend/"]
     desk -- "queue and line maps<br/>(same Python tools)" --> tools
     desk -- "Ask the agent" --> agent["<b>ADK agent</b><br/>agent/grant_agent/"]
-    agent -- "plans, writes prose" --> gemini[("Gemini 2.5 Flash<br/>Vertex AI")]
+    agent -- "plans, writes prose" --> gemini[("Gemini 3.8 Flash<br/>Vertex AI · global")]
     agent --> tools["<b>Our tools</b><br/>get_cascade · recommend_grants<br/>exposed_non_applicants"]
     agent -- MCP --> toolbox["<b>MCP Toolbox</b><br/>4 read-only SQL tools"]
     tools -- "multi-hop GQL MATCH" --> graph[["BigQuery property graph<br/>a4i_econ.LocalEconomy"]]
@@ -158,9 +158,10 @@ flowchart LR
    uniqueness × downstream exposure) × neighborhood need. It hands out the budget in 25% slices of
    each request, always to whoever buys the most need-weighted protection per dollar. Every
    business, applicant or downstream, counts once, at its best protection. The total it reports
-   is the unweighted count of expected closures avoided. It then reruns under five alternative
-   assumptions to show which awards are stable.
-4. **The agent.** [`agent.py`](agent/grant_agent/agent.py) is an ADK agent on Gemini 2.5 Flash
+   is the unweighted count of expected closures avoided. For every grant it names a runner-up:
+   where the same money would go instead, and what it would avoid there. It then reruns under
+   five alternative assumptions to show which awards are stable.
+4. **The agent.** [`agent.py`](agent/grant_agent/agent.py) is an ADK agent on Gemini 3.8 Flash
    with our three Python tools and four MCP Toolbox tools. [`prompt.py`](agent/grant_agent/prompt.py)
    sets its rules: every number from a tool, call modeled links modeled, say so when the data can't
    separate two applicants, never fund a business just for being connected, no race or ethnicity.
@@ -175,7 +176,7 @@ The full picture, with the deployed services, request flows and how to redeploy,
 | Requirement | Where |
 |---|---|
 | ADK agent, in Python | [`agent/grant_agent/agent.py`](agent/grant_agent/agent.py): `root_agent` |
-| Gemini | `gemini-2.5-flash` on Vertex AI, us-central1 (set by `GEMINI_MODEL`) |
+| Gemini | `gemini-3.8-flash` on Vertex AI's `global` endpoint (set by `GEMINI_MODEL` and `GOOGLE_CLOUD_LOCATION`) |
 | BigQuery property graph, genuinely traversed with a multi-hop `MATCH` | Graph: [`sql/01_create_graph.sql`](sql/01_create_graph.sql). Traversal: `_cascades` in [`tools.py`](agent/grant_agent/tools.py), quantified path `{1,2}`, up to `{1,3}` |
 | At least one tool we built | `get_cascade`, `recommend_grants`, `exposed_non_applicants` in [`tools.py`](agent/grant_agent/tools.py); the allocation logic in [`allocator.py`](agent/grant_agent/allocator.py) |
 | At least one Google-managed MCP server, consumed | [MCP Toolbox for Databases](https://github.com/googleapis/mcp-toolbox), configured in [`agent/toolbox/tools.yaml`](agent/toolbox/tools.yaml), deployed on Cloud Run, connected through ADK's `ToolboxToolset` |
@@ -302,8 +303,8 @@ AGENT_URL=https://grant-agent-173086820802.us-west2.run.app \
 ```bash
 GOOGLE_GENAI_USE_ENTERPRISE=1          # Gemini through Vertex AI
 GOOGLE_CLOUD_PROJECT=qwiklabs-gcp-04-524776bdd295
-GOOGLE_CLOUD_LOCATION=us-central1      # Gemini isn't available to this project in us-west2
-GEMINI_MODEL=gemini-2.5-flash
+GOOGLE_CLOUD_LOCATION=global           # 3.8 Flash is served to this project only at the global endpoint
+GEMINI_MODEL=gemini-3.8-flash
 TOOLBOX_URL=https://toolbox-173086820802.us-west2.run.app   # optional; omit to run without MCP
 ```
 

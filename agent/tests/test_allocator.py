@@ -63,3 +63,22 @@ def test_path_limit_is_an_error_not_a_silent_truncation(monkeypatch):
     monkeypatch.setattr(tools, "_rows", lambda _: [{}] * 50000)
     with pytest.raises(RuntimeError):
         tools._cascades(["16"], 3)
+
+def test_every_grant_has_its_own_runner_up():
+    apps = [mk("a", 6000, 45, 1, exposed=4), mk("b", 6000, 30, 2), mk("c", 6000, 40, 1, exposed=1)]
+    res = recommend(apps, 9000, 0.2)
+    for r in res["recommended"]:
+        ru = r["runner_up"]
+        assert ru["closures_avoided_by_this_grant"] == r["closures_avoided_by_this_grant"]
+        freed = r["award"] + res["unallocated"]
+        assert sum(m["amount"] for m in ru["money_would_go_to"]) <= freed
+        assert r["business_id"] not in {m["business_id"] for m in ru["money_would_go_to"]}
+        assert ru["verdict"] in {"this_grant", "alternative", "indistinguishable"}
+
+def test_identical_applicants_are_indistinguishable():
+    from grant_agent.allocator import ASSUMPTIONS
+    twins = [mk("twin1", 5000, 40, 2), mk("twin2", 5000, 40, 2)]
+    res = recommend(twins, 5000, 0.2, {**ASSUMPTIONS, "EFFECT_CURVE": 1.0})
+    ru = res["recommended"][0]["runner_up"]
+    assert ru["verdict"] == "indistinguishable"
+    assert ru["business_id"] == ({"twin1", "twin2"} - {res["recommended"][0]["business_id"]}).pop()

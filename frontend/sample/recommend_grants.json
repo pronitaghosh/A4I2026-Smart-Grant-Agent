@@ -1,7 +1,7 @@
 {
   "meta": {
     "captured": "2026-11-17",
-    "source": "agent/grant_agent tools (with review fixes) on live a4i_econ tables",
+    "source": "agent/grant_agent tools (value_grants: per-grant runner-up) on live a4i_econ tables",
     "corridor_poverty": 0.21476030177160027
   },
   "recommend_grants": {
@@ -15,6 +15,8 @@
         "business_id": "16",
         "name": "Sour Flour",
         "address": "1182 Market St 415",
+        "own_value": 0.1687,
+        "cascade_value": 3.0925,
         "requested": 5000.0,
         "award": 5000.0,
         "pct_of_request": 100,
@@ -31,12 +33,34 @@
           "Supplies 69 businesses directly and 28 more at two hops; strongest chain: Sour Flour → Third & Leconte Assoc A Ca Lp (link intensities 0.059).",
           "0 other local business(es) in the same industry: no local substitute, so the full cascade counts.",
           "Tract poverty 18% vs corridor average 21%."
-        ]
+        ],
+        "runner_up": {
+          "business_id": "211",
+          "name": "San Francisco Proper Hotel - Villon",
+          "money_would_go_to": [
+            {
+              "business_id": "211",
+              "name": "San Francisco Proper Hotel - Villon",
+              "amount": 3000.0
+            },
+            {
+              "business_id": "73",
+              "name": "Eddy St Bodega Inc",
+              "amount": 2000.0
+            }
+          ],
+          "closures_avoided_by_this_grant": 3.144,
+          "closures_avoided_instead": 0.049,
+          "priority_margin_pct": 98.1,
+          "verdict": "this_grant"
+        }
       },
       {
         "business_id": "73",
         "name": "Eddy St Bodega Inc",
         "address": "200 Eddy St",
+        "own_value": 0.1495,
+        "cascade_value": 0,
         "requested": 11000.0,
         "award": 9000.0,
         "pct_of_request": 82,
@@ -52,12 +76,39 @@
           "Baseline closure risk 41%: reports 26% revenue drop, 2 months of cash. (Lost a major customer; payroll at risk next month.)",
           "No downstream businesses in the supply graph (a leaf): the case rests on its own survival.",
           "Tract poverty 36% vs corridor average 21%."
-        ]
+        ],
+        "runner_up": {
+          "business_id": "114",
+          "name": "The Warfield Theater",
+          "money_would_go_to": [
+            {
+              "business_id": "114",
+              "name": "The Warfield Theater",
+              "amount": 4000.0
+            },
+            {
+              "business_id": "211",
+              "name": "San Francisco Proper Hotel - Villon",
+              "amount": 3000.0
+            },
+            {
+              "business_id": "66",
+              "name": "Non Plus Ultra",
+              "amount": 2000.0
+            }
+          ],
+          "closures_avoided_by_this_grant": 0.15,
+          "closures_avoided_instead": 0.097,
+          "priority_margin_pct": 49.5,
+          "verdict": "this_grant"
+        }
       },
       {
         "business_id": "135",
         "name": "Honeybee Foods Corporation Dba Jollibee",
         "address": "934 Market St",
+        "own_value": 0.2173,
+        "cascade_value": 0.0013,
         "requested": 9000.0,
         "award": 9000.0,
         "pct_of_request": 100,
@@ -74,12 +125,39 @@
           "Supplies 1 businesses directly and 0 more at two hops; strongest chain: Honeybee Foods Corporation Dba Jollibee → Warfield Hotel Inc (link intensities 0.036).",
           "28 other local business(es) in the same industry: buyers could switch, so the cascade is discounted.",
           "Tract poverty 24% vs corridor average 21%."
-        ]
+        ],
+        "runner_up": {
+          "business_id": "114",
+          "name": "The Warfield Theater",
+          "money_would_go_to": [
+            {
+              "business_id": "114",
+              "name": "The Warfield Theater",
+              "amount": 4000.0
+            },
+            {
+              "business_id": "211",
+              "name": "San Francisco Proper Hotel - Villon",
+              "amount": 3000.0
+            },
+            {
+              "business_id": "73",
+              "name": "Eddy St Bodega Inc",
+              "amount": 2000.0
+            }
+          ],
+          "closures_avoided_by_this_grant": 0.175,
+          "closures_avoided_instead": 0.092,
+          "priority_margin_pct": 46.7,
+          "verdict": "this_grant"
+        }
       },
       {
         "business_id": "106",
         "name": "Blue Bottle Coffee LLC",
         "address": "66 Mint St",
+        "own_value": 0.2047,
+        "cascade_value": 0.0013,
         "requested": 7000.0,
         "award": 7000.0,
         "pct_of_request": 100,
@@ -96,12 +174,34 @@
           "Supplies 1 businesses directly and 0 more at two hops; strongest chain: Blue Bottle Coffee LLC → Hampton Inn San Francisco Downtown Convention Center (link intensities 0.036).",
           "28 other local business(es) in the same industry: buyers could switch, so the cascade is discounted.",
           "Tract poverty 22% vs corridor average 21%."
-        ]
+        ],
+        "runner_up": {
+          "business_id": "114",
+          "name": "The Warfield Theater",
+          "money_would_go_to": [
+            {
+              "business_id": "114",
+              "name": "The Warfield Theater",
+              "amount": 4000.0
+            },
+            {
+              "business_id": "211",
+              "name": "San Francisco Proper Hotel - Villon",
+              "amount": 3000.0
+            }
+          ],
+          "closures_avoided_by_this_grant": 0.163,
+          "closures_avoided_instead": 0.076,
+          "priority_margin_pct": 51.7,
+          "verdict": "this_grant"
+        }
       },
       {
         "business_id": "211",
         "name": "San Francisco Proper Hotel - Villon",
         "address": "1100 Market St",
+        "own_value": 0.1457,
+        "cascade_value": 0,
         "requested": 11000.0,
         "award": 6000.0,
         "pct_of_request": 55,
@@ -117,12 +217,34 @@
           "Baseline closure risk 49%: reports 42% revenue drop, 2 months of cash. (Equipment failure; repair cost exceeds cash reserves.)",
           "No downstream businesses in the supply graph (a leaf): the case rests on its own survival.",
           "Tract poverty 24% vs corridor average 21%."
-        ]
+        ],
+        "runner_up": {
+          "business_id": "114",
+          "name": "The Warfield Theater",
+          "money_would_go_to": [
+            {
+              "business_id": "114",
+              "name": "The Warfield Theater",
+              "amount": 4000.0
+            },
+            {
+              "business_id": "73",
+              "name": "Eddy St Bodega Inc",
+              "amount": 2000.0
+            }
+          ],
+          "closures_avoided_by_this_grant": 0.131,
+          "closures_avoided_instead": 0.059,
+          "priority_margin_pct": 52.3,
+          "verdict": "this_grant"
+        }
       },
       {
         "business_id": "114",
         "name": "The Warfield Theater",
         "address": "982 Market St",
+        "own_value": 0.0716,
+        "cascade_value": 0.0358,
         "requested": 15000.0,
         "award": 4000.0,
         "pct_of_request": 27,
@@ -139,12 +261,29 @@
           "Supplies 5 businesses directly and 2 more at two hops; strongest chain: The Warfield Theater → 200 Channels LLC (link intensities 0.129).",
           "2 other local business(es) in the same industry: buyers could switch, so the cascade is discounted.",
           "Tract poverty 24% vs corridor average 21%."
-        ]
+        ],
+        "runner_up": {
+          "business_id": "66",
+          "name": "Non Plus Ultra",
+          "money_would_go_to": [
+            {
+              "business_id": "66",
+              "name": "Non Plus Ultra",
+              "amount": 4000.0
+            }
+          ],
+          "closures_avoided_by_this_grant": 0.083,
+          "closures_avoided_instead": 0.053,
+          "priority_margin_pct": 40.8,
+          "verdict": "this_grant"
+        }
       },
       {
         "business_id": "92",
         "name": "Oak Tree Hotel",
         "address": "45 6th St",
+        "own_value": 0.0893,
+        "cascade_value": 0,
         "requested": 14000.0,
         "award": 3500.0,
         "pct_of_request": 25,
@@ -160,12 +299,29 @@
           "Baseline closure risk 45%: reports 21% revenue drop, 1 months of cash. (Rent increase at lease renewal; need bridge funding for three months.)",
           "No downstream businesses in the supply graph (a leaf): the case rests on its own survival.",
           "Tract poverty 22% vs corridor average 21%."
-        ]
+        ],
+        "runner_up": {
+          "business_id": "211",
+          "name": "San Francisco Proper Hotel - Villon",
+          "money_would_go_to": [
+            {
+              "business_id": "211",
+              "name": "San Francisco Proper Hotel - Villon",
+              "amount": 3000.0
+            }
+          ],
+          "closures_avoided_by_this_grant": 0.074,
+          "closures_avoided_instead": 0.033,
+          "priority_margin_pct": 54.3,
+          "verdict": "this_grant"
+        }
       },
       {
         "business_id": "185",
         "name": "Soliome Inc",
         "address": "479 Jessie St",
+        "own_value": 0.0716,
+        "cascade_value": 0,
         "requested": 15000.0,
         "award": 4000.0,
         "pct_of_request": 27,
@@ -181,12 +337,29 @@
           "Baseline closure risk 35%: reports 36% revenue drop, 4 months of cash. (Rent increase at lease renewal; need bridge funding for three months.)",
           "No downstream businesses in the supply graph (a leaf): the case rests on its own survival.",
           "Tract poverty 22% vs corridor average 21%."
-        ]
+        ],
+        "runner_up": {
+          "business_id": "211",
+          "name": "San Francisco Proper Hotel - Villon",
+          "money_would_go_to": [
+            {
+              "business_id": "211",
+              "name": "San Francisco Proper Hotel - Villon",
+              "amount": 3000.0
+            }
+          ],
+          "closures_avoided_by_this_grant": 0.072,
+          "closures_avoided_instead": 0.033,
+          "priority_margin_pct": 51.9,
+          "verdict": "this_grant"
+        }
       },
       {
         "business_id": "66",
         "name": "Non Plus Ultra",
         "address": "88 5th St",
+        "own_value": 0.0507,
+        "cascade_value": 0.0211,
         "requested": 8000.0,
         "award": 2000.0,
         "pct_of_request": 25,
@@ -203,7 +376,22 @@
           "Supplies 4 businesses directly and 2 more at two hops; strongest chain: Non Plus Ultra → 200 Channels LLC (link intensities 0.129).",
           "2 other local business(es) in the same industry: buyers could switch, so the cascade is discounted.",
           "Tract poverty 22% vs corridor average 21%."
-        ]
+        ],
+        "runner_up": {
+          "business_id": "73",
+          "name": "Eddy St Bodega Inc",
+          "money_would_go_to": [
+            {
+              "business_id": "73",
+              "name": "Eddy St Bodega Inc",
+              "amount": 2000.0
+            }
+          ],
+          "closures_avoided_by_this_grant": 0.048,
+          "closures_avoided_instead": 0.016,
+          "priority_margin_pct": 55.6,
+          "verdict": "this_grant"
+        }
       }
     ],
     "not_funded": [
@@ -211,6 +399,8 @@
         "business_id": "85",
         "name": "Supremo Pizza Inc",
         "address": "87 6th St",
+        "own_value": 0.0,
+        "cascade_value": 0.0,
         "requested": 12000.0,
         "award": 0.0,
         "pct_of_request": 0,
@@ -233,6 +423,8 @@
         "business_id": "171",
         "name": "Tradespace",
         "address": "1161 Mission St",
+        "own_value": 0.0,
+        "cascade_value": 0.0,
         "requested": 11000.0,
         "award": 0.0,
         "pct_of_request": 0,
@@ -256,6 +448,8 @@
       "business_id": "85",
       "name": "Supremo Pizza Inc",
       "address": "87 6th St",
+      "own_value": 0.0,
+      "cascade_value": 0.0,
       "requested": 12000.0,
       "award": 0.0,
       "pct_of_request": 0,
@@ -278,6 +472,8 @@
       "business_id": "66",
       "name": "Non Plus Ultra",
       "address": "88 5th St",
+      "own_value": 0.0507,
+      "cascade_value": 0.0211,
       "requested": 8000.0,
       "award": 2000.0,
       "pct_of_request": 25,
@@ -294,7 +490,22 @@
         "Supplies 4 businesses directly and 2 more at two hops; strongest chain: Non Plus Ultra → 200 Channels LLC (link intensities 0.129).",
         "2 other local business(es) in the same industry: buyers could switch, so the cascade is discounted.",
         "Tract poverty 22% vs corridor average 21%."
-      ]
+      ],
+      "runner_up": {
+        "business_id": "73",
+        "name": "Eddy St Bodega Inc",
+        "money_would_go_to": [
+          {
+            "business_id": "73",
+            "name": "Eddy St Bodega Inc",
+            "amount": 2000.0
+          }
+        ],
+        "closures_avoided_by_this_grant": 0.048,
+        "closures_avoided_instead": 0.016,
+        "priority_margin_pct": 55.6,
+        "verdict": "this_grant"
+      }
     },
     "assumptions": {
       "STRONG_LINK": 0.05,

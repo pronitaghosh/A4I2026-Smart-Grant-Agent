@@ -80,9 +80,10 @@ def portfolio_value(apps, awards, corridor_poverty, A=ASSUMPTIONS) -> float:
     return sum(best.values())
 
 
-def allocate(apps, budget, corridor_poverty, A=ASSUMPTIONS):
+def allocate(apps, budget, corridor_poverty, A=ASSUMPTIONS, start=None, exclude=()):
     """Greedy: repeatedly give the next slice of money to whoever buys the most
-    closures-avoided per dollar, until money or worthwhile moves run out."""
+    closures-avoided per dollar, until money or worthwhile moves run out.
+    `start` continues from existing awards; applicants in `exclude` get no further money."""
     if not isfinite(budget) or budget < 0:
         raise ValueError("Budget must be finite and nonnegative.")
     ids = [a.business_id for a in apps]
@@ -92,11 +93,14 @@ def allocate(apps, budget, corridor_poverty, A=ASSUMPTIONS):
     if any(not isfinite(a.requested) or a.requested <= 0 for a in apps):
         raise ValueError("Requests must be finite and positive.")
     awards = {a.business_id: 0.0 for a in apps}
-    spent = 0.0
+    awards.update(start or {})
+    spent = sum(awards.values())
     while True:
         base = portfolio_value(apps, awards, corridor_poverty, A)
         move = None
         for a in apps:
+            if a.business_id in exclude:
+                continue
             cur = awards[a.business_id]
             step = max(500.0, round(a.requested * A["STEP_FRACTION"] / 500) * 500)
             new = min(a.requested, cur + step)
@@ -159,6 +163,43 @@ def value_split(a: Applicant, award: float, corridor_poverty, A: dict = ASSUMPTI
     return own, cascade
 
 
+TIE_MARGIN = 0.10   # grants within 10% of their alternative are "the data can't separate them"
+
+
+def grant_runner_up(apps, awards, budget, corridor_poverty, bid, A=ASSUMPTIONS) -> dict:
+    """The runner-up for one grant: withdraw it, let the same greedy allocator re-spend that
+    money (plus anything unallocated) on everyone else, and compare what each buys.
+
+    Closures are unweighted, like the totals. The verdict uses the need-weighted priority the
+    allocator optimizes; within TIE_MARGIN it is "indistinguishable"."""
+    names = {a.business_id: a.name for a in apps}
+    raw = {**A, "NEED_WEIGHT": 0.0}
+    without = {**awards, bid: 0.0}
+    instead, _ = allocate(apps, budget, corridor_poverty, A, start=without, exclude={bid})
+    moved = sorted(((b, instead[b] - without[b]) for b in instead if instead[b] > without[b]),
+                   key=lambda kv: -kv[1])
+
+    def gain(aw, AA):
+        return portfolio_value(apps, aw, corridor_poverty, AA) - portfolio_value(apps, without, corridor_poverty, AA)
+
+    this_p, instead_p = gain(awards, A), gain(instead, A)
+    top = max(this_p, instead_p)
+    margin = (this_p - instead_p) / top if top > 0 else 0.0
+    if abs(margin) < TIE_MARGIN:
+        verdict = "indistinguishable"
+    else:
+        verdict = "this_grant" if margin > 0 else "alternative"
+    return {
+        "business_id": moved[0][0] if moved else None,
+        "name": names[moved[0][0]] if moved else None,
+        "money_would_go_to": [{"business_id": b, "name": names[b], "amount": amt} for b, amt in moved],
+        "closures_avoided_by_this_grant": round(gain(awards, raw), 3),
+        "closures_avoided_instead": round(gain(instead, raw), 3),
+        "priority_margin_pct": round(100 * margin, 1),
+        "verdict": verdict,
+    }
+
+
 def recommend(apps, budget, corridor_poverty, A=ASSUMPTIONS) -> dict:
     awards, spent = allocate(apps, budget, corridor_poverty, A)
     priority = portfolio_value(apps, awards, corridor_poverty, A)
@@ -191,6 +232,8 @@ def recommend(apps, budget, corridor_poverty, A=ASSUMPTIONS) -> dict:
             "reasons": _reasons(a, aw, corridor_poverty, A),
         })
     funded = sorted([r for r in rows if r["award"] > 0], key=lambda r: -r["priority_loss"])
+    for r in funded:   # value_grants in the PRD: a runner-up for every grant (FR-6)
+        r["runner_up"] = grant_runner_up(apps, awards, budget, corridor_poverty, r["business_id"], A)
     unfunded = sorted([r for r in rows if r["award"] == 0],
                       key=lambda r: -r["priority_per_10k"])
 

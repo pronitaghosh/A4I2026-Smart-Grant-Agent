@@ -26,10 +26,11 @@ https://grant-agent-173086820802.us-west2.run.app. The grant desk (`frontend/`) 
 
 `root_agent` (in `agent.py`) is an `Agent` named `grant_agent`:
 
-- **Model:** `GEMINI_MODEL`, default `gemini-2.5-flash`, through Vertex AI.
-  `GOOGLE_CLOUD_LOCATION` defaults to `us-central1`. The agent refuses to start with any location
-  other than `us-central1` or `global`, because Gemini isn't available to this project in
-  us-west2.
+- **Model:** `GEMINI_MODEL` through Vertex AI. The deployment runs `gemini-3.8-flash` with
+  `GOOGLE_CLOUD_LOCATION=global`, the only location that serves 3.8 Flash to this project. With
+  neither variable set, the code falls back to `gemini-2.5-flash` in `us-central1`, a pair that
+  also works. The agent refuses to start with any location other than `us-central1` or `global`,
+  because us-west2 returns `FAILED_PRECONDITION` for every Gemini model.
 - **Tools:** our three Python function tools. When `TOOLBOX_URL` is set, it also gets the
   Toolbox's `grant_toolset` through ADK's `ToolboxToolset`. That connects on first use, so the
   agent still loads if the Toolbox is down. Without `TOOLBOX_URL`, the instruction gains a rule:
@@ -61,7 +62,7 @@ ADK sends each tool's docstring to Gemini as its description.
 
 | Tool | Use it for | Returns |
 |---|---|---|
-| `recommend_grants(budget=50000, depth=2)` | "Who should we fund?", "What does $X change?" | `budget`, `allocated`, `unallocated`, `expected_closures_avoided_total` (unweighted), `need_weighted_priority_total`, `min_link`, `recommended[]` (in priority order) and `not_funded[]` (per applicant: `award`, `pct_of_request`, `pct_of_budget`, `baseline_risk`, `risk_after_award`, `downstream_exposed`, `closures_avoided_by_this_grant`, `closures_avoided_per_10k_if_fully_funded`, `reasons[]`), `runner_up`, `weakest_funded`, `assumptions`, `sensitivity`, `evidence_note` |
+| `recommend_grants(budget=50000, depth=2)` | "Who should we fund?", "What does $X change?" | `budget`, `allocated`, `unallocated`, `expected_closures_avoided_total` (unweighted), `need_weighted_priority_total`, `min_link`, `recommended[]` (in priority order) and `not_funded[]` (per applicant: `award`, `pct_of_request`, `pct_of_budget`, `baseline_risk`, `risk_after_award`, `downstream_exposed`, `closures_avoided_by_this_grant`, `closures_avoided_per_10k_if_fully_funded`, `reasons[]`, and for each grant its own `runner_up`), the queue's `runner_up`, `weakest_funded`, `assumptions`, `sensitivity`, `evidence_note` |
 | `get_cascade(business_id, depth=2)` | "What does this business hold up?", "Show me why" | `business`, `exposed_count`, `by_hop`, `local_alternatives_same_industry`, `is_leaf`, `traversal` (the GQL `MATCH` it ran), `min_link`, up to 15 strongest `paths[]` (`path` as "A → B → C", `hops`, `weight`, `link_intensities`), always including a multi-hop path when one exists, and `evidence_note` |
 | `exposed_non_applicants(depth=2)` | "Who else is at risk?", "Should someone downstream have applied?" | Up to 15 businesses downstream of applicants that didn't apply: the chains reaching them, the strongest weight, and any real SBA charge-off |
 
@@ -130,6 +131,12 @@ public, so jobs aren't counted.
   for a first award) to whoever adds the most value per dollar. It stops when the budget or the
   worthwhile moves run out. It refuses a non-finite or negative budget, a non-positive request,
   and duplicate registrations (same ID, or same name and address).
+- **A runner-up for every grant** (`grant_runner_up`, the PRD's `value_grants`). Withdraw the
+  grant, let the same greedy allocator re-spend that money (plus anything unallocated) on
+  everyone else, and compare. Each funded row's `runner_up` gives `money_would_go_to`,
+  `closures_avoided_by_this_grant` and `closures_avoided_instead` (unweighted), the
+  `priority_margin_pct` on the need-weighted value the allocator optimizes, and a `verdict`:
+  `this_grant`, `alternative`, or `indistinguishable` when within 10%.
 - **Sensitivity:** it reruns the allocation under five alternatives and reports
   `funded_in_every_scenario`. The alternatives are contagion at 0.10 and at 0.50, a linear
   effect curve, a steeper diminishing curve, and need ignored.
@@ -159,8 +166,8 @@ it's gitignored:
 ```bash
 GOOGLE_GENAI_USE_ENTERPRISE=1          # Gemini through Vertex AI (the guide's GOOGLE_GENAI_USE_VERTEXAI=TRUE also works)
 GOOGLE_CLOUD_PROJECT=qwiklabs-gcp-04-524776bdd295
-GOOGLE_CLOUD_LOCATION=us-central1      # Gemini isn't available to this project in us-west2
-GEMINI_MODEL=gemini-2.5-flash
+GOOGLE_CLOUD_LOCATION=global           # 3.8 Flash is served to this project only at the global endpoint
+GEMINI_MODEL=gemini-3.8-flash
 TOOLBOX_URL=https://toolbox-173086820802.us-west2.run.app   # optional
 ```
 
@@ -194,6 +201,8 @@ realistic test replaces `_rows`.
 | `test_reported_total_is_unweighted_by_need` | The reported total is the unweighted count, and the need-weighted priority is reported separately |
 | `test_applicant_downstream_of_another_counts_once` | An applicant that is also downstream of another grantee isn't counted twice |
 | `test_path_limit_is_an_error_not_a_silent_truncation` | Hitting the 50,000-path limit raises an error |
+| `test_every_grant_has_its_own_runner_up` | Every funded grant names a runner-up, the money re-spent never exceeds what the grant freed, and its closures count matches the grant's own |
+| `test_identical_applicants_are_indistinguishable` | Two identical applicants: the runner-up is the twin and the verdict is "indistinguishable" |
 
 ## Deploy
 

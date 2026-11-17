@@ -155,6 +155,16 @@ function comparisonLine(a, st) {
     return w ? `If fully funded, ${a.name} avoids ${per(a)} expected closures per $10,000. ` +
       `The weakest funded grant, ${w.name}, avoids ${per(w)}.` : null;
   }
+  // value_grants: this grant's own runner-up, i.e. where the same money would go instead.
+  const own = a.runner_up;
+  if (own && own.name) {
+    const fmt = (x) => x.toFixed(2);
+    const to = own.money_would_go_to.map((m) => `${m.name} (${money.format(m.amount)})`).join(", ");
+    const verdict = own.verdict === "indistinguishable" ? " The data can't separate them."
+      : own.verdict === "alternative" ? " The alternative would do better." : "";
+    return `This grant avoids ${fmt(own.closures_avoided_by_this_grant)} expected closures. ` +
+      `The same money would go to ${to} and avoid ${fmt(own.closures_avoided_instead)}.${verdict}`;
+  }
   const ru = r.runner_up;
   if (!ru || ru.business_id === a.business_id) return null;
   return `If fully funded, ${a.name} avoids ${per(a)} expected closures per $10,000; ` +

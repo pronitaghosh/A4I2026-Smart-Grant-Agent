@@ -26,7 +26,7 @@ flowchart LR
         toolbox["<b>toolbox</b><br/>MCP Toolbox for Databases<br/>agent/toolbox/tools.yaml"]
     end
 
-    gemini[("Gemini 2.5 Flash<br/>Vertex AI · us-central1")]
+    gemini[("Gemini 3.8 Flash<br/>Vertex AI · global")]
 
     subgraph bq["BigQuery · dataset a4i_econ · US"]
         pgraph[["Property graph LocalEconomy<br/>Business, Employer · Supplies, DrawsFootfall"]]
@@ -49,11 +49,11 @@ screen and the agent's answers always come from the same code and data.
 | Service | Code | Where | Runs as | Key settings |
 |---|---|---|---|---|
 | **grant-desk** (the Live Demo link) | `frontend/` + `agent/grant_agent/` | Cloud Run, us-west2, 1 GiB, min 1 instance. https://grant-desk-173086820802.us-west2.run.app | default compute service account | `AGENT_URL`, `AGENT_APP=grant_agent`. Built by `frontend/cloudbuild.yaml` from the repo root |
-| **grant-agent** | `agent/grant_agent/` | Cloud Run, us-west2, 512 MiB, min 1. https://grant-agent-173086820802.us-west2.run.app | default compute service account | `GOOGLE_GENAI_USE_ENTERPRISE=1` (Vertex AI), `GOOGLE_CLOUD_LOCATION=us-central1`, `GEMINI_MODEL=gemini-2.5-flash`, `TOOLBOX_URL` |
+| **grant-agent** | `agent/grant_agent/` | Cloud Run, us-west2, 512 MiB, min 1. https://grant-agent-173086820802.us-west2.run.app | default compute service account | `GOOGLE_GENAI_USE_ENTERPRISE=1` (Vertex AI), `GOOGLE_CLOUD_LOCATION=global`, `GEMINI_MODEL=gemini-3.8-flash`, `TOOLBOX_URL` |
 | **toolbox** | `agent/toolbox/tools.yaml` | Cloud Run, us-west2, 512 MiB, min 1. https://toolbox-173086820802.us-west2.run.app | `toolbox-sa` (BigQuery Job User, Data Viewer, Secret Accessor) | Image `database-toolbox/toolbox:latest`; config mounted from Secret Manager at `/app/tools.yaml` |
 | toolbox (second copy) | same | Cloud Run, us-central1 | `toolbox-sa` | Not used by the agent. Keep as a spare or delete |
 | **BigQuery** | `sql/` | dataset `a4i_econ`, US multi-region | — | Graph queries run on on-demand billing; no reservation needed in this project |
-| **Gemini** | — | Vertex AI, us-central1 | — | Gemini is not available to this project in us-west2 (`FAILED_PRECONDITION`) |
+| **Gemini** | — | Vertex AI, `global` endpoint | — | `gemini-3.8-flash`. Checked 2026-11-17: `gemini-3.8-flash` (and 3.5 Flash) is served to this project only at the `global` endpoint, not in us-central1 or us-west1. us-west2 returns `400 FAILED_PRECONDITION` for every Gemini model. |
 
 Every service keeps one instance warm, so the recorded demo never waits on a cold start.
 
@@ -183,12 +183,17 @@ gcloud run deploy grant-desk --region us-west2 \
 
 ```bash
 cd agent && adk deploy cloud_run --project qwiklabs-gcp-04-524776bdd295 --region us-west2 \
-  --service_name grant-agent --with_ui ./grant_agent
-# Then always restore the settings; a redeploy can reset GOOGLE_CLOUD_LOCATION to us-west2,
-# where Gemini fails:
-gcloud run services update grant-agent --region us-west2 --min-instances 1 \
-  --update-env-vars GOOGLE_CLOUD_LOCATION=us-central1,GEMINI_MODEL=gemini-2.5-flash,TOOLBOX_URL=https://toolbox-173086820802.us-west2.run.app
+  --service_name grant-agent --with_ui \
+  --env GOOGLE_CLOUD_LOCATION=global \
+  --env GEMINI_MODEL=gemini-3.8-flash \
+  --env TOOLBOX_URL=https://toolbox-173086820802.us-west2.run.app \
+  ./grant_agent -- --min-instances=1
 ```
+
+`--region` is where the service runs; `GOOGLE_CLOUD_LOCATION` is where Gemini is called. Left
+alone, `adk deploy` sets `GOOGLE_CLOUD_LOCATION` to the `--region` value, hence the `--env`
+override. Checked 2026-11-17: `gemini-3.8-flash` (and 3.5 Flash) is served to this project only at the `global` endpoint, not in us-central1 or us-west1. us-west2 returns `400 FAILED_PRECONDITION` for every Gemini model. To fall back to 2.5 Flash, set `GEMINI_MODEL=gemini-2.5-flash`;
+it works at `global` and in us-central1.
 
 **Toolbox.** After editing `agent/toolbox/tools.yaml`, run the deploy script. It reuses the
 service account, uploads `tools.yaml` as a new version of the `tools` secret, and redeploys the
@@ -207,8 +212,8 @@ REGION=us-west2 bash agent/toolbox/deploy.sh
 |---|---|---|---|
 | grant-agent | `GOOGLE_GENAI_USE_ENTERPRISE` | `1` | Gemini through Vertex AI (ADK's name for it; the older `GOOGLE_GENAI_USE_VERTEXAI=TRUE` also works) |
 | grant-agent | `GOOGLE_CLOUD_PROJECT` | `qwiklabs-gcp-04-524776bdd295` | Project for Vertex AI and BigQuery |
-| grant-agent | `GOOGLE_CLOUD_LOCATION` | `us-central1` | Gemini region. Must not be us-west2 |
-| grant-agent | `GEMINI_MODEL` | `gemini-2.5-flash` | The model behind `root_agent` |
+| grant-agent | `GOOGLE_CLOUD_LOCATION` | `global` | Where Gemini is called. 3.8 Flash is served only here; us-west2 fails for every model |
+| grant-agent | `GEMINI_MODEL` | `gemini-3.8-flash` | The model behind `root_agent`. The code's default, if unset, is `gemini-2.5-flash` |
 | grant-agent | `TOOLBOX_URL` | `https://toolbox-173086820802.us-west2.run.app` | Adds the MCP Toolbox tools. Without it, the agent runs on its Python tools only |
 | grant-desk | `AGENT_URL` | `https://grant-agent-173086820802.us-west2.run.app` | Where "Ask the agent" goes. Without it, `/api/ask` returns 503 |
 | grant-desk | `AGENT_APP` | `grant_agent` | ADK app name |
@@ -240,7 +245,7 @@ The table uses the project-number form.
 | Issue | Effect | Status |
 |---|---|---|
 | The allocator funded Tradespace, a healthy hub with 113 weak generic links, first and in full | Contradicted "don't fund the robust hub" | **Fixed.** The weakest-link rule (PR #12) leaves Tradespace one dependent business, and it isn't funded. The applicant swap (PR #13) put three real cascades in the queue. Sour Flour is now grant 1 |
-| A redeploy of the agent may reset its Gemini location to us-west2 | Every question failed with a 500 | Re-run the settings command above after each agent deploy. Since PR #15, the agent refuses to start with a location other than us-central1 or global, so the mistake shows up at deploy time |
+| A redeploy of the agent reset its Gemini location to us-west2 | Every question failed with a 500 | **Root cause found:** `adk deploy` sets `GOOGLE_CLOUD_LOCATION` to `--region` unless overridden. The deploy command above passes `--env GOOGLE_CLOUD_LOCATION=global`. Since PR #15, the agent also refuses to start with a location other than us-central1 or global |
 | Two Toolbox services | Confusion about which one is live | The agent uses us-west2; the us-central1 copy is idle |
 | First load after a desk deploy takes about 9 seconds | A slow first impression | Open the desk once before recording |
 | Each question starts a new agent session | Follow-ups don't remember earlier questions | Acceptable for the demo |
