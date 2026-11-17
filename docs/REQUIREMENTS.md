@@ -51,7 +51,7 @@ criterion is met; the gap is named. **Not started** means nothing exists yet.
 | Determinism | Same inputs, identical allocation | Met. Traversal in SQL, scoring and allocation in Python. Gemini only writes prose |
 | Latency | Full memo under 60 s; follow-ups under 20 s | Met. About 15 s for a full recommendation through the agent and about 5 s for a lookup. The desk's first load after a deploy takes about 9 s, then it's cached |
 | Demo reliability | Minimum instances 1 for the agent and Toolbox | Met, and for the desk too |
-| Location | BigQuery in US; Cloud Run in us-west2 | Met. Gemini is called in us-central1, because it isn't available to this project in us-west2 |
+| Location | BigQuery in US; Cloud Run in us-west2 | Met. Gemini is called at Vertex AI's `global` endpoint: us-west2 returns `FAILED_PRECONDITION`, and 3.8 Flash isn't served regionally |
 | Readability | Written for a council member | Met in the desk: reasons and assumptions in plain English. Memo length isn't enforced |
 | Privacy | No individual-level personal data | Met. The filtered registry is used as provided |
 | Access | Least-privilege service accounts | Partial. The Toolbox has its own narrow account; the desk and agent use the default compute account |
@@ -75,6 +75,6 @@ criterion is met; the gap is named. **Not started** means nothing exists yet.
 |---|---|
 | How many applicants, and how chosen | 11, chosen on purpose: the robust hub, three real cascades, three one-hop food businesses, four leaves. Financials use the build guide's illustrative formulas |
 | Front end: `adk web` or a funding-queue UI | The funding-queue UI (the grant desk). The agent's `adk web` dev UI is also deployed |
-| Gemini region | `gemini-2.5-flash` in us-central1. us-west2 returned `FAILED_PRECONDITION` |
+| Gemini model and region | `gemini-3.8-flash` at the `global` endpoint, the newest Flash this project can call. us-west2 returns `FAILED_PRECONDITION`, and us-central1 and us-west1 serve only 2.5 Flash |
 | Graph reservation | Not needed. Creating one hit a Qwiklabs-wide quota, but graph queries ran without it |
 | P2 differentiator | None yet. The P1 items were prioritized |
