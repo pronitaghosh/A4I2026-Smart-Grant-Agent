@@ -11,7 +11,7 @@ const ROW = 44;
 const TOP = 46;
 const LABEL_MAX = 26;
 
-const state = { rec: null, selected: null, order: [] };
+const state = { rec: null, audit: null, selected: null, order: [] };
 
 function h(tag, attrs = {}, ...children) {
   const node = document.createElement(tag);
@@ -135,7 +135,7 @@ function riskLine(a, st) {
     ? `Closure risk ${pct(a.baseline_risk)}, unchanged without a grant.`
     : `Closure risk ${pct(a.baseline_risk)} → ${pct(a.risk_after_award)} with this grant; ` +
       `${a.closures_avoided_by_this_grant} expected closures avoided, counting the cascade.`;
-  return h("p", { class: "risk" }, change, tag);
+  return h("p", { class: "risk" }, change, tag, st === "not_funded" ? null : modeledTag(a));
 }
 
 function sensitivityTag(a, st) {
@@ -292,6 +292,103 @@ function animateLines(root) {
   root.querySelectorAll(".lm-edge").forEach((p) => p.style.setProperty("--len", p.getTotalLength().toFixed(1)));
 }
 
+/* Equity audit: renders audit_allocation(). Industry and tract poverty only, never race. */
+const SECTOR_COLS = [["corridor_share", "Corridor", "corridor"], ["applicant_share", "Applicants", "applicants"],
+                     ["money_share", "Money", "money"]];
+
+function renderAuditStrip() {
+  const strip = document.getElementById("audit-strip");
+  strip.hidden = false;
+  const a = state.audit;
+  if (a.error) {
+    strip.replaceChildren(h("strong", {}, "Equity check"), h("span", { class: "muted" }, `Not available: ${a.error}`));
+    return;
+  }
+  strip.replaceChildren(h("strong", {}, "Equity check"), h("span", {}, a.headline),
+    h("button", { type: "button", onclick: showAudit }, "Open the audit"));
+}
+
+function shareCell(v, max, kind) {
+  return h("td", {}, h("div", { class: `share ${kind}` },
+    h("span", { class: "share-bar", "aria-hidden": "true" },
+      h("span", { style: `width: ${max ? (100 * v) / max : 0}%` })),
+    h("span", { class: "share-num" }, pct(v))));
+}
+
+function industryTable(rows) {
+  const shown = rows.filter((r) => r.corridor_share || r.applicant_share || r.money_share);
+  const max = Math.max(...shown.flatMap((r) => SECTOR_COLS.map(([k]) => r[k])));
+  return h("div", { class: "table-scroll" }, h("table", { class: "audit-table" },
+    h("caption", {}, "Each sector's share of corridor businesses, of applicants, and of the money"),
+    h("thead", {}, h("tr", {}, h("th", { scope: "col" }, "Sector"),
+      ...SECTOR_COLS.map(([, label]) => h("th", { scope: "col" }, label)), h("th", { scope: "col" }, "Flag"))),
+    h("tbody", {}, ...shown.map((r) => h("tr", { class: r.flag ? "flagged" : "" },
+      h("th", { scope: "row" }, r.sector),
+      ...SECTOR_COLS.map(([k, , kind]) => shareCell(r[k], max, kind)),
+      h("td", {}, r.flag ? [h("span", { class: `tag ${r.flag}` },
+                              `${r.flag} · ${r.money_vs_corridor != null ? `${r.money_vs_corridor}x` : "small sector"}`),
+                            r.edge_generator_bias ? h("span", { class: "tag bias" }, "edge-generator bias") : null,
+                            h("span", { class: "cause" }, r.likely_cause)] : "")))))) ;
+}
+
+function needLines(need) {
+  const fmt = (x) => (x == null ? "n/a" : pct(x));
+  const line = (label, n) => h("p", {}, h("strong", {}, `${label}: `),
+    `${fmt(n.funded_dollar_weighted)} where the money lands (dollar-weighted), ` +
+    `${fmt(n.applicant_avg)} across applicants, ${fmt(n.corridor_avg)} corridor average.`);
+  return [line("Residents below poverty", need.poverty_rate), line("Households without a car", need.no_vehicle_rate),
+          h("p", { class: "fine" }, "ACS 2019 five-year estimates, by census tract.")];
+}
+
+function modeledBlock(m) {
+  const share = m.plan_cascade_share_dollar_weighted;
+  const list = m.cascade_driven_awards;
+  return [
+    h("p", {}, share == null ? "No funded awards." :
+      `${pct(share)} of the plan's value (dollar-weighted) comes from the supply cascades grants protect, ` +
+      "which rest on modeled links."),
+    list.length
+      ? h("ul", { class: "reason-list driven-list" }, ...list.map((d) => h("li", {},
+          h("button", { type: "button", onclick: () => select(d.business_id) }, d.name),
+          ` · ${money.format(d.award)} · ${pct(d.cascade_share)} of its value from the cascade`)))
+      : h("p", { class: "fine" }, "No award rests mainly on modeled links."),
+  ];
+}
+
+function renderAudit(a) {
+  const t = a.thresholds;
+  return [
+    h("p", { class: "case-status audit" }, "Equity audit of this plan"),
+    h("h2", {}, "Where the money goes"),
+    h("p", { class: "audit-headline" }, a.headline),
+    a.source === "sample" ? h("p", { class: "fine" }, `Sample run captured ${a.captured}.`) : null,
+    reason("In the memo", h("ul", { class: "reason-list memo-lines" }, ...a.memo_lines.map((t) => h("li", {}, t)))),
+    industryTable(a.industry),
+    h("div", { class: "reasons" },
+      reason("Findings", h("ul", { class: "reason-list" }, ...a.findings.map((f) => h("li", {}, f)))),
+      reason("Who the money reaches", ...needLines(a.need)),
+      reason("Resting on modeled links", ...modeledBlock(a.modeled_evidence)),
+      reason("Read this with care",
+        h("ul", { class: "reason-list fine" }, ...a.caveats.map((c) => h("li", {}, c))),
+        h("p", { class: "fine" }, `Flags: at least ${t.over}x or at most ${t.under}x a sector's corridor share ` +
+          `(sectors with at least ${pct(t.min_sector_share)} of corridor businesses), or money at least ` +
+          `${Math.round(t.over_gap * 100)} points above corridor share at any size.`))),
+  ];
+}
+
+function showAudit() {
+  state.selected = null;
+  document.querySelectorAll(".queue-item button").forEach((b) => b.setAttribute("aria-current", "false"));
+  const pane = document.getElementById("case");
+  pane.replaceChildren(...renderAudit(state.audit));
+  pane.querySelector("h2").scrollIntoView({ block: "nearest" });
+}
+
+function modeledTag(a) {
+  const d = state.audit?.modeled_evidence?.cascade_driven_awards?.find((x) => x.business_id === a.business_id);
+  return d ? h("span", { class: "tag modeled" }, `${pct(d.cascade_share)} of value from modeled links`) : null;
+}
+
 /* Ask the agent */
 
 // The agent answers in Markdown (tables, lists, bold). Render it, sanitized because it
@@ -358,6 +455,8 @@ async function select(id) {
 }
 
 async function init() {
+  // The audit loads alongside the plan; if it fails, the desk still works without it.
+  const audit = getJSON("/api/audit").catch((e) => ({ error: e.message }));
   try {
     state.rec = await getJSON("/api/recommendation");
   } catch (e) {
@@ -369,6 +468,10 @@ async function init() {
   renderDesk();
   renderQueue();
   if (state.order.length) select(state.order[0].business_id);
+  state.audit = await audit;
+  renderAuditStrip();
+  if (location.hash === "#audit" && !state.audit.error) showAudit();  // deep link for the demo
+  else if (state.selected) select(state.selected);  // redraw the open case with its modeled-links tag
 }
 
 init();
