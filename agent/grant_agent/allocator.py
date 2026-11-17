@@ -140,6 +140,16 @@ SENSITIVITY = {
 }
 
 
+def value_split(a: Applicant, award: float, corridor_poverty, A: dict = ASSUMPTIONS) -> tuple[float, float]:
+    """(own_value, cascade_value) of one grant, in expected closures avoided. Per-grant view:
+    overlap with other grants is ignored, so use it for the split, not for totals."""
+    dp = risk_reduction(a, award, A)
+    nm = need_mult(a, corridor_poverty, A)
+    own = dp * nm
+    cascade = sum(dp * A["CONTAGION"] * uniqueness(a) * w * nm for (w, *_rest) in a.exposed.values())
+    return own, cascade
+
+
 def recommend(apps, budget, corridor_poverty, A=ASSUMPTIONS) -> dict:
     awards, spent = allocate(apps, budget, corridor_poverty, A)
     total = portfolio_value(apps, awards, corridor_poverty, A)
@@ -149,8 +159,10 @@ def recommend(apps, budget, corridor_poverty, A=ASSUMPTIONS) -> dict:
         aw = awards[a.business_id]
         lose_if_dropped = total - portfolio_value(apps, {**awards, a.business_id: 0.0}, corridor_poverty, A)
         solo = portfolio_value([a], {a.business_id: a.requested}, corridor_poverty, A)
+        own_v, casc_v = value_split(a, aw, corridor_poverty, A)
         rows.append({
             "business_id": a.business_id, "name": a.name, "address": a.address,
+            "own_value": round(own_v, 4), "cascade_value": round(casc_v, 4),
             "requested": a.requested, "award": aw,
             "pct_of_request": round(100 * aw / a.requested) if a.requested else 0,
             "pct_of_budget": round(100 * aw / budget, 1) if budget else 0,
