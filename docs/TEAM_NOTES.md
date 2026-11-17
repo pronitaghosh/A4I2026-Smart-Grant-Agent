@@ -5,14 +5,14 @@ From the architect / data lane (Sankar), 2026-11-17. Track: **Main Street relief
 
 ## In one minute
 
-- **BigQuery is ready for the agent.** The property graph `a4i_econ.LocalEconomy` and the two
-  tables the build guide needs, `applications` and `business_tract`, exist in the lab project.
-  The guide's tools can run against them now.
-- **The grant desk works** (`frontend/`): the officer's funding queue, a $50,000 budget bar, and each
-  applicant's cascade drawn as a transit-style line map. It reads the agent's own tools, so the
-  screen and the agent always show the same numbers.
-- **Agent lane, please read the QA findings below.** On the real data, the allocator funds the
-  "robust hub" (Tradespace) first, in full.
+- **Everything is deployed and connected.** The grant desk (the Live Demo link,
+  https://grant-desk-173086820802.us-west2.run.app) shows live numbers from the agent's tools, and
+  its "Ask the agent" box answers through the deployed ADK agent, which uses the MCP Toolbox. How
+  the pieces fit, with diagrams: [ARCHITECTURE.md](ARCHITECTURE.md).
+- **BigQuery is ready.** The property graph `a4i_econ.LocalEconomy` and the tables `applications`
+  and `business_tract` exist in the lab project.
+- **Still open, and the judges will notice:** on the real data the allocator funds the "robust hub"
+  (Tradespace) first, in full. See the QA findings below.
 
 ## What's in BigQuery
 
@@ -73,14 +73,14 @@ python3 -m venv .venv && .venv/bin/pip install -r frontend/requirements.txt
 
 ### Where its numbers come from
 
-1. **Live**, when `agent/grant_agent/tools.py` is importable: the desk calls the agent's
-   `recommend_grants()` and `get_cascade()` directly.
-2. **Sample**, until then: `frontend/sample/*.json`, captured on 2026-11-17 by running the build
-   guide's `allocator.py` on the live tables. The page shows an amber notice saying so.
+1. **Live** (the deployed desk today): the desk imports the agent's `recommend_grants()` and
+   `get_cascade()` and calls them directly.
+2. **Sample**, if the agent package is missing (for example, running only `frontend/` locally):
+   `frontend/sample/*.json`, captured by running the same allocator on the live tables. The page
+   shows an amber notice saying so.
 
-The **Ask the agent** box forwards to the deployed agent through the ADK API server (build guide
-step 10). Set `AGENT_URL` to the agent's Cloud Run URL (and `AGENT_APP` if the app isn't named
-`grant_agent`). Without it, the box says the agent isn't connected.
+The **Ask the agent** box forwards to the deployed agent through the ADK API server, using
+`AGENT_URL` (set on the deployed desk). Answers render as formatted tables and lists.
 
 ### What the desk expects from the agent's tools
 
@@ -98,9 +98,8 @@ If you change these tools, keep these fields or tell us:
   `hops`, `weight`, `link_intensities`.
 
 **Live:** https://grant-desk-173086820802.us-west2.run.app (Cloud Run service `grant-desk`,
-us-west2, minimum 1 instance). It shows the sample until the agent's tools are written. To serve
-live numbers, the next deploy has to include `agent/grant_agent/` in the container, and the service
-account needs BigQuery read access.
+us-west2, minimum 1 instance), serving live numbers. To redeploy it, see
+[ARCHITECTURE.md, Deploying](ARCHITECTURE.md#deploying).
 
 ## QA findings for the agent lane
 
@@ -135,15 +134,26 @@ reads paths with `NODES(p)` and `UNNEST(d)` instead, and that works on this data
 
 | Branch | What's on it |
 |---|---|
-| `data` | `sql/` (graph and tables), `agent/grant_tools/` (tested cascade query), this file |
-| `frontend` | `frontend/` (the grant desk and its sample data) |
+| `data` | `sql/` (graph and tables), `agent/grant_tools/` (tested cascade query), `docs/` |
+| `frontend` | `frontend/` (the grant desk, its Dockerfile and sample data) |
 | `agent` | the agent lane's work |
 
-Merge into `main` at each gate.
+Everything is merged into `main` except the newest change on each branch; check the open PRs.
+
+## Equity audit (for the deck)
+
+From the live allocation ($50,000, 10 grants), against all 230 corridor businesses:
+
+- **The money reaches poorer tracts.** Dollar-weighted tract poverty of the grants is 23.9%,
+  against a corridor average of 21.5%; all 10 grants are in tracts above that average.
+- **The industry bias the README predicted shows up.** Food and lodging gets 39% of the money but is
+  28% of businesses; tech and professional services get 35% against 25%. Personal services get 6%
+  against 12%, and health and social services get nothing (none applied).
 
 ## Still open
 
-- Decide the applicant swap above.
-- Deploy the agent (agent lane), then redeploy the grant desk with the agent's tools and `AGENT_URL`.
+- Fix the robust-hub finding and decide the applicant swap above.
+- After any agent redeploy, restore its Gemini location (see [ARCHITECTURE.md](ARCHITECTURE.md#deploying)).
 - Run the build guide's test table, the seven officer questions and the failure cases, against
   the deployed agent (QA).
+- Deck (6 slides) and pitch video (under 3 minutes).
