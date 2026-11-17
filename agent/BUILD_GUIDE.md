@@ -847,6 +847,7 @@ Deploy:
 
 ```bash
 export PROJECT_ID=$(gcloud config get-value project)
+export REGION=$(gcloud run services list --format="value(region)" --limit=1)
 gcloud services enable run.googleapis.com secretmanager.googleapis.com
 
 gcloud iam service-accounts create toolbox-sa
@@ -861,30 +862,34 @@ gcloud secrets create tools --data-file=agent/toolbox/tools.yaml
 gcloud run deploy toolbox \
   --image us-central1-docker.pkg.dev/database-toolbox/toolbox/toolbox:latest \
   --service-account toolbox-sa@$PROJECT_ID.iam.gserviceaccount.com \
-  --region us-central1 \
+  --region ${REGION} \
   --set-secrets "/app/tools.yaml=tools:latest" \
+  --set-env-vars PROJECT_ID=$PROJECT_ID \
   --args="--tools-file=/app/tools.yaml","--address=0.0.0.0","--port=8080" \
   --min-instances=1 \
   --allow-unauthenticated   # hackathon shortcut; read-only predefined SQL over public data
 ```
 
 Put the service URL into `TOOLBOX_URL` in `.env`. If the agent can't reach it, check
-`gcloud run services logs read toolbox --region us-central1`.
+`gcloud run services logs read toolbox --region ${REGION}`.
 
 ---
 
 ## 10. Deploy the agent to Cloud Run (deploy early, redeploy often)
 
 ```bash
+
+export TOOLBOX_URL=https://toolbox-xxxx.a.run.app
+
 cd agent
 adk deploy cloud_run \
-  --project $PROJECT_ID --region us-central1 \
+  --project $PROJECT_ID --region ${REGION} \
   --service_name grant-agent --with_ui \
   ./grant_agent
 
 # Make sure the runtime has the env vars and minimum instances:
-gcloud run services update grant-agent --region us-central1 --min-instances=1 \
-  --set-env-vars GOOGLE_GENAI_USE_VERTEXAI=TRUE,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=us-central1,GEMINI_MODEL=gemini-2.5-flash,TOOLBOX_URL=https://toolbox-xxxx.a.run.app
+gcloud run services update grant-agent --region ${REGION} --min-instances=1 \
+  --set-env-vars GOOGLE_GENAI_USE_VERTEXAI=TRUE,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=${REGION},GEMINI_MODEL=gemini-2.5-flash,TOOLBOX_URL=${TOOLBOX_URL}
 ```
 
 The Cloud Run service account needs **BigQuery Job User**, **BigQuery Data Viewer** and **Vertex
