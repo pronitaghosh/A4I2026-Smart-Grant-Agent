@@ -69,7 +69,7 @@ def _cascades(seed_ids: list[str], depth: int) -> dict[str, dict]:
     out: dict[str, dict] = {i: {} for i in ids}
     for r in _rows(gql):
         nodes, ints = _parse_path(r["path_json"])
-        if len(nodes) < 2:
+        if len(nodes) < 2 or not ints or min(ints) < 0.02:
             continue
         x = nodes[-1]["id"]
         w = allocator.path_weight(ints)

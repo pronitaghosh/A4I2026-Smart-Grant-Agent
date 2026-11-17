@@ -15,3 +15,19 @@ def test_leaf_still_fundable_and_budget_respected():
     res = recommend(apps, 15000, 0.2)
     assert res["allocated"] <= 15000
     assert any(r["award"] > 0 for r in res["recommended"])
+
+def test_realistic_weak_hub_is_not_funded_first(monkeypatch):
+    from grant_agent import tools
+    node = lambda bid: {"kind": "node", "properties": {"business_id": bid, "name": bid}}
+    rows = []
+    for i in range(194):
+        ints = [0.0209] if i == 0 else ([0.015] if i < 113 else [0.015, 0.05])
+        path = [node("171")]
+        for hop, intensity in enumerate(ints):
+            path.extend([{"kind": "edge", "properties": {"intensity": intensity}}, node(f"x{i}_{hop}")])
+        rows.append({"seed_id": "171", "path_json": path})
+    monkeypatch.setattr(tools, "_rows", lambda _: rows)
+    hub = mk("171", 11000, 8, 9)
+    hub.exposed = tools._cascades(["171"], 2)["171"]
+    res = recommend([hub, mk("106", 7000, 34, 1, exposed=1, alts=28)], 18000, 0.2)
+    assert res["recommended"][0]["business_id"] == "106"
