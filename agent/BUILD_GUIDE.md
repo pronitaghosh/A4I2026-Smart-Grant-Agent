@@ -200,7 +200,7 @@ In Cloud Shell, from the repo root:
 ```bash
 cd agent
 python3 -m venv .venv && source .venv/bin/activate
-pip install google-adk google-cloud-bigquery toolbox-core pytest
+pip install "google-adk[toolbox]" google-cloud-bigquery toolbox-core pytest
 mkdir grant_agent && cd grant_agent
 touch __init__.py agent.py tools.py allocator.py prompt.py
 ```
@@ -238,7 +238,7 @@ TOOLBOX_URL=https://toolbox-xxxx.a.run.app   # filled in after Step 9
 `grant_agent/requirements.txt`:
 
 ```
-google-adk
+google-adk[toolbox]
 google-cloud-bigquery
 toolbox-core
 ```
@@ -268,10 +268,9 @@ from google.cloud import bigquery
 
 from . import allocator
 
-PROJECT = os.environ["GOOGLE_CLOUD_PROJECT"]
+PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT", "")
 DS = f"{PROJECT}.a4i_econ"
 GRAPH = "a4i_econ.LocalEconomy"
-_bq = bigquery.Client(project=PROJECT, location="US")
 _SAFE_ID = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
 
 MODELED_NOTE = (
@@ -282,8 +281,17 @@ MODELED_NOTE = (
 )
 
 
+@lru_cache(maxsize=1)
+def _client() -> bigquery.Client:
+    """Created on first use, not at import, so the package (and the allocator tests)
+    load without credentials."""
+    if not PROJECT or PROJECT == "your-project-id":
+        raise RuntimeError("Set GOOGLE_CLOUD_PROJECT in grant_agent/.env to your team project.")
+    return bigquery.Client(project=PROJECT, location="US")
+
+
 def _rows(sql: str) -> list[dict]:
-    return [dict(r) for r in _bq.query(sql).result()]
+    return [dict(r) for r in _client().query(sql).result()]
 
 
 def _parse_path(pj) -> tuple[list[dict], list[float]]:
@@ -577,7 +585,8 @@ def _reasons(a: Applicant, award: float, corridor_poverty, A) -> list[str]:
     if a.charged_off_before:
         r.append("Real SBA record shows a prior charged-off loan (raises risk).")
     if baseline_risk(a) < 0.2 and len(a.exposed) >= 10:
-        r.append("Well connected but financially robust: money changes its odds little. This is why the hub is not funded first.")
+        r.append(f"Well connected but financially robust (baseline risk {baseline_risk(a):.0%}): each dollar "
+                 "changes its odds little, so its value comes almost entirely from the cascade it protects.")
     return r
 
 
@@ -678,14 +687,12 @@ from .tools import get_cascade, recommend_grants, exposed_non_applicants
 
 tools = [recommend_grants, get_cascade, exposed_non_applicants]
 
-# MCP Toolbox (Step 9). Kept optional so the agent still runs locally before Toolbox is up.
+# MCP Toolbox (Step 9). Optional so the agent still runs locally before Toolbox is up.
+# ToolboxToolset connects on first use, not at import, so an unreachable Toolbox
+# cannot stop the agent from loading. Needs: pip install "google-adk[toolbox]".
 if os.getenv("TOOLBOX_URL"):
-    try:
-        from google.adk.tools.toolbox_toolset import ToolboxToolset
-        tools.append(ToolboxToolset(server_url=os.environ["TOOLBOX_URL"], toolset_name="grant_toolset"))
-    except ImportError:
-        from toolbox_core import ToolboxSyncClient
-        tools.extend(ToolboxSyncClient(os.environ["TOOLBOX_URL"]).load_toolset("grant_toolset"))
+    from google.adk.tools.toolbox_toolset import ToolboxToolset
+    tools.append(ToolboxToolset(server_url=os.environ["TOOLBOX_URL"], toolset_name="grant_toolset"))
 
 root_agent = Agent(
     name="grant_agent",
@@ -734,8 +741,9 @@ Return, in this order:
 1. A table: Business | Address | Award $ | % of request | Closures avoided (expected) | One-line reason.
 2. For each funded business, 2-4 bullet reasons taken from the tool's `reasons`, including the
    strongest cascade path written as A → B → C with hop count and link strength.
-3. Runner-up: who just missed, and the specific number that separates them from the weakest
-   funded applicant.
+3. Runner-up (the tool's runner_up): if anyone was left unfunded, it is who just missed; say the
+   specific number that separates them from the weakest funded applicant. If every applicant got
+   something, runner_up is the grant closest to being cut; say that, and do not call it unfunded.
 4. "What we are assuming": list the assumptions in plain English (e.g. "full funding cuts an
    applicant's closure risk by 40%"), and which awards survive the sensitivity check
    (funded_in_every_scenario) versus which depend on the assumptions.
