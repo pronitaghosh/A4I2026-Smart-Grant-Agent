@@ -603,33 +603,54 @@ Cloud Run is unaffected: there the service account is used and `_bq` is never se
 ## Step 10: Capture the sample, `frontend/sample/capture_audit.py` (5 min)
 
 The desk serves saved samples until the agent's tools are inside its container. Capture the
-audit sample **from the live tables**, never by hand, the same way the other samples were made:
+audit sample **from the live tables**, never by hand. The saved recommendation sample
+(`recommend_grants.json`) was captured from the live tables too, so the script checks that the
+live plan funds the same businesses with the same awards before it writes anything. Otherwise
+the desk would show an audit of a different plan from the queue on screen.
 
 ```python
 """Capture frontend/sample/audit_allocation.json from the live a4i_econ tables.
-Run from the repo root where BigQuery works (Cloud Shell), with GOOGLE_CLOUD_PROJECT set:
+
+Run from the repo root where BigQuery works (Cloud Shell), with the agent's dependencies
+installed and the project exported (this script does not read grant_agent/.env):
+
+    export GOOGLE_CLOUD_PROJECT=$(gcloud config get-value project)
     agent/.venv/bin/python frontend/sample/capture_audit.py
+
+It refuses to write if the live plan differs from the saved recommend_grants.json, because the
+desk would then show an audit of a different plan from its queue. Recapture that sample too, or
+pass --force to write anyway.
 """
 import datetime
 import json
+import os
 import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+BUDGET = 50000
+
+if not os.environ.get("GOOGLE_CLOUD_PROJECT"):
+    sys.exit("Set the project first: export GOOGLE_CLOUD_PROJECT=$(gcloud config get-value project)")
+
 sys.path.insert(0, str(HERE.parents[1] / "agent"))
 from grant_agent import tools  # noqa: E402
 
-audit = tools.audit_allocation(50000)
+audit = tools.audit_allocation(BUDGET)
 if "error" in audit:
     sys.exit(f"audit_allocation failed: {audit['error']}")
 
-# The audit must describe the same plan as the saved recommendation sample.
+# The audit must describe the same plan as the saved recommendation sample: same names, same awards.
 rec = json.loads((HERE / "recommend_grants.json").read_text())["recommend_grants"]
-saved = sorted(r["name"] for r in rec["recommended"])
-audited = sorted(f["name"] for f in audit["plan"]["funded"])
-if saved != audited:
-    print("WARNING: recommend_grants.json shows a different plan. Recapture it too, "
-          "or the audit will not match the queue on screen.")
+saved = sorted((r["name"], float(r["award"])) for r in rec["recommended"])
+audited = sorted((f["name"], float(f["award"])) for f in audit["plan"]["funded"])
+if rec["budget"] != BUDGET or saved != audited:
+    print("The live plan differs from frontend/sample/recommend_grants.json:")
+    for name, award in sorted(set(saved) ^ set(audited)):
+        print(f"  {'saved' if (name, award) in saved else 'live '}: {name} ${award:,.0f}")
+    if "--force" not in sys.argv:
+        sys.exit("Not written. Recapture recommend_grants.json from the same tables, or pass --force.")
+    print("--force: writing anyway.")
 
 out = {"meta": {"captured": datetime.date.today().isoformat(),
                 "source": "agent/grant_agent audit_allocation on live a4i_econ tables"},
