@@ -1,8 +1,8 @@
 # Requirements status
 
 Each requirement in the [PRD](PRD.pdf), with what the repo and the deployed system do about it.
-As of 2026-11-17, on `main` plus the open PRs #10 (desk Markdown rendering) and #13 (applicant
-queue), both of which are live.
+As of 2026-11-17, on `main` plus the open PRs #10 (desk Markdown rendering), #13 (applicant
+queue) and #15 (review fixes). #10 and #13 are live. #15 goes live with the next deploy.
 
 **Done** means it works on the deployed system. **Partial** means part of the acceptance
 criterion is met; the gap is named. **Not started** means nothing exists yet.
@@ -17,10 +17,10 @@ criterion is met; the gap is named. **Not started** means nothing exists yet.
 | FR-2 | Applicant queue from real corridor businesses | Done | [`sql/02_applications.sql`](../sql/02_applications.sql): 11 real businesses, $118,000 requested. Financial fields are flagged `illustrative = TRUE` |
 | FR-3 | Property graph over `a4i_econ` | Done | [`sql/01_create_graph.sql`](../sql/01_create_graph.sql): `Business` and `Employer` nodes, `Supplies` and `DrawsFootfall` edges. Keys checked unique; see [TEAM_NOTES.md](TEAM_NOTES.md) |
 | FR-4 | Cascade traversal, 1 to 3 hops, with a stopping rule | Done | `_cascades` in [`tools.py`](../agent/grant_agent/tools.py): a quantified-path GQL `MATCH` over `Supplies`, depth 1 to 3. The stopping rule is that every link must be ≥ 0.02. Empty cascades are reported (`is_leaf`) |
-| FR-5 | Grant valuation tool we built | Done | [`allocator.py`](../agent/grant_agent/allocator.py): deterministic, and every assumption is named in `ASSUMPTIONS` and returned with each result |
+| FR-5 | Grant valuation tool we built | Done | [`allocator.py`](../agent/grant_agent/allocator.py): deterministic, and every assumption is named in `ASSUMPTIONS` and returned with each result. It reports an unweighted count of expected closures avoided, and keeps the need-weighted priority separate |
 | FR-6 | Allocation within budget, with a runner-up | Done, with one gap | Greedy allocation in 25% slices that never exceeds the budget. Shared downstream businesses count once. There is one runner-up for the whole allocation (`runner_up`, plus `weakest_funded`), not one per grant |
-| FR-7 | Grant Memo with the seven elements | Partial | `prompt.py` fixes the answer format: award table, reasons with the strongest chain A → B → C, runner-up, assumptions, evidence note, neighborhood. No automated check yet confirms all seven elements appear for every funded business |
-| FR-8 | Traceability and refusal | Partial | The prompt rules are "every number from a tool", and "within ~10%, say the data can't separate them". Every tool result carries an `evidence_note`. There's no automated citation check or scripted tie test yet. `grant_tools.compare_cascades` has a tested 10% tie verdict that isn't wired in |
+| FR-7 | Grant Memo with the seven elements | Partial | `prompt.py` fixes the answer format: award table, reasons with the strongest chain A → B → C, runner-up, assumptions, evidence note, neighborhood. For "the traversal shown", `get_cascade` returns the GQL it ran, the cutoff and a two-hop path, and the prompt asks for them in a full memo. No automated check yet confirms all seven elements appear for every funded business |
+| FR-8 | Traceability and refusal | Partial | The prompt rules are "every number from a tool", and "within 10% on `closures_avoided_per_10k_if_fully_funded`, refuse a strict ordering". Every tool result carries an `evidence_note`. There's no automated citation check or scripted tie test yet. `grant_tools.compare_cascades` has a tested 10% tie verdict that isn't wired in |
 | FR-9 | Consume a managed MCP server | Done | MCP Toolbox for Databases on Cloud Run. Its four tools in [`tools.yaml`](../agent/toolbox/tools.yaml) are attached through `ToolboxToolset`. Name lookups (`find_business`), loans and tract profiles go through it |
 | FR-10 | Deploy behind a live demo link | Done | Cloud Run us-west2: [grant desk](https://grant-desk-173086820802.us-west2.run.app), `grant-agent`, `toolbox`. Each keeps one instance warm |
 

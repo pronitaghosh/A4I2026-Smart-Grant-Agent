@@ -60,8 +60,8 @@ What the officer sees:
 - **Header:** applications, total requested, grants, expected closures avoided, and the $50,000 bar.
   Click a bar segment or a queue row to open that case.
 - **Queue:** recommended grants first (amount, % of ask, closure risk, downstream count), then not funded.
-- **Case:** status and amount; closure risk before → after the grant; whether the award holds under
-  every assumption tested; the cascade line map; the agent's reasons; the runner-up comparison;
+- **Case:** status and amount; closure risk before → after the grant; whether the applicant receives some funding in
+  every assumption set tested; the cascade line map; the agent's reasons; the runner-up comparison;
   tract demographics; the assumptions in plain English; the evidence note; the strongest paths
   with link strengths; and an "Ask the agent" box.
 
@@ -112,7 +112,9 @@ us-west2, minimum 1 instance), serving live numbers. To redeploy it, see
 
 Live result at $50,000: Sour Flour is grant 1 ($5,000, 97 businesses downstream), and
 Tradespace is not funded. 9 grants, $49,500 allocated, and expected closures avoided rose from
-1.19 to 4.14. The original findings follow, for the record.
+1.19 to 4.14, both need-weighted. After the review fixes (PR #15), the same 9 awards report
+**4.18** as an unweighted count, and Eddy St Bodega (poorest tract) moves to #2 in priority. The
+original findings follow, for the record.
 
 From running the build guide's allocator, unchanged, on the real tables (depth 2, $50,000):
 
@@ -149,6 +151,7 @@ reads paths with `NODES(p)` and `UNNEST(d)` instead, and that works on this data
 | `frontend` | `frontend/` (the grant desk, its Dockerfile and sample data) |
 | `agent` | the agent lane's work |
 | `hub-fix`, `applicant-swap` | The QA fixes above (PRs #12 and #13) |
+| `review-fixes` | Code review fixes: honest totals, evidence in tool output, desk failure handling (PR #15) |
 | `docs` | The project README, component READMEs, requirements status and `scripts/hub_check.py` |
 
 Merge into `main` through pull requests; check the open PRs for what isn't in yet.

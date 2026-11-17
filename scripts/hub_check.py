@@ -4,8 +4,10 @@
   2. Distress only:   highest closure risk first, full requests, until the money runs out.
   3. Ours:            allocator.recommend(), i.e. risk x cascade x need.
 
-All three are scored with the same model (allocator.portfolio_value), so the totals
-favor ours by construction. The useful output is who moves between the lists, and why.
+All three are scored with the same model (allocator.portfolio_value): expected closures
+avoided, unweighted, as recommend_grants reports it, and the need-weighted priority our
+allocator optimizes. Ours wins on its own objective by construction; the useful output is
+who moves between the lists, and why.
 
 Run from the repo root, with BigQuery read access to the lab project:
     gcloud auth application-default login
@@ -87,8 +89,11 @@ for a in sorted(apps, key=lambda a: -links[a.business_id]):
     print(f"{a.name[:32]:32s} {links[a.business_id]:>5} {allocator.baseline_risk(a):>5.0%} "
           f"{len(a.exposed):>10}  {awards}")
 print()
+RAW = {**allocator.ASSUMPTIONS, "NEED_WEIGHT": 0.0}
 for name, awards in plans.items():
-    value = allocator.portfolio_value(apps, awards, corridor_poverty)
-    print(f"{name}: spent ${sum(awards.values()):,.0f}, expected closures avoided {value:.2f}")
+    closures = allocator.portfolio_value(apps, awards, corridor_poverty, RAW)
+    priority = allocator.portfolio_value(apps, awards, corridor_poverty)
+    print(f"{name}: spent ${sum(awards.values()):,.0f}, expected closures avoided {closures:.2f}, "
+          f"need-weighted priority {priority:.2f}")
 print("\nlinks = supply buyers before the weakest-link rule; downstream = businesses exposed "
       "after it (depth 2, every link >= 0.02).")

@@ -25,9 +25,14 @@ https://grant-agent-173086820802.us-west2.run.app. The grant desk (`frontend/`) 
 `root_agent` (in `agent.py`) is an `Agent` named `grant_agent`:
 
 - **Model:** `GEMINI_MODEL`, default `gemini-2.5-flash`, through Vertex AI.
+  `GOOGLE_CLOUD_LOCATION` defaults to `us-central1`. The agent refuses to start with any location
+  other than `us-central1` or `global`, because Gemini isn't available to this project in
+  us-west2.
 - **Tools:** our three Python function tools. When `TOOLBOX_URL` is set, it also gets the
   Toolbox's `grant_toolset` through ADK's `ToolboxToolset`. That connects on first use, so the
-  agent still loads if the Toolbox is down.
+  agent still loads if the Toolbox is down. Without `TOOLBOX_URL`, the instruction gains a rule:
+  lookups are unavailable, so ask for a `business_id` and don't invent name matches, loans or
+  tract profiles.
 - **Instruction:** `prompt.py`. It routes questions to tools: "Who should we fund?" goes to
   `recommend_grants`, "Why this one?" to `get_cascade`, "Who else is exposed?" to
   `exposed_non_applicants`, and lookups to the Toolbox. It also fixes the answer format: an award
@@ -37,8 +42,13 @@ https://grant-agent-173086820802.us-west2.run.app. The grant desk (`frontend/`) 
   - Say "expected closures avoided", never "jobs saved".
   - Never recommend a business just because it is the most connected.
   - Call a leaf a leaf; that alone isn't a reason to reject it.
-  - If two applicants are within about 10% of each other, say the data can't separate them.
+  - Compare applicants on one metric, `closures_avoided_per_10k_if_fully_funded`. Within 10% of
+    each other, refuse a strict ordering and name the information that would separate them.
+  - For a full memo, call `get_cascade` for the lead grant and the runner-up, and show the
+    traversal, a two-hop path and the cutoff.
+  - No name match means the business is unknown; several matches means ask which address.
   - Describe modeled supply links as modeled.
+  - Always disclose that applicant financials and grant effectiveness are illustrative.
   - No race or ethnicity in any reasoning.
 
 ## Tools
@@ -49,8 +59,8 @@ ADK sends each tool's docstring to Gemini as its description.
 
 | Tool | Use it for | Returns |
 |---|---|---|
-| `recommend_grants(budget=50000, depth=2)` | "Who should we fund?", "What does $X change?" | `budget`, `allocated`, `unallocated`, `expected_closures_avoided_total`, `recommended[]` and `not_funded[]` (per applicant: `award`, `pct_of_request`, `pct_of_budget`, `baseline_risk`, `risk_after_award`, `downstream_exposed`, `closures_avoided_by_this_grant`, `closures_avoided_per_10k_if_fully_funded`, `reasons[]`), `runner_up`, `weakest_funded`, `assumptions`, `sensitivity`, `evidence_note` |
-| `get_cascade(business_id, depth=2)` | "What does this business hold up?", "Show me why" | `business`, `exposed_count`, `by_hop`, `local_alternatives_same_industry`, `is_leaf`, up to 15 strongest `paths[]` (`path` as "A → B → C", `hops`, `weight`, `link_intensities`), `evidence_note` |
+| `recommend_grants(budget=50000, depth=2)` | "Who should we fund?", "What does $X change?" | `budget`, `allocated`, `unallocated`, `expected_closures_avoided_total` (unweighted), `need_weighted_priority_total`, `min_link`, `recommended[]` (in priority order) and `not_funded[]` (per applicant: `award`, `pct_of_request`, `pct_of_budget`, `baseline_risk`, `risk_after_award`, `downstream_exposed`, `closures_avoided_by_this_grant`, `closures_avoided_per_10k_if_fully_funded`, `reasons[]`), `runner_up`, `weakest_funded`, `assumptions`, `sensitivity`, `evidence_note` |
+| `get_cascade(business_id, depth=2)` | "What does this business hold up?", "Show me why" | `business`, `exposed_count`, `by_hop`, `local_alternatives_same_industry`, `is_leaf`, `traversal` (the GQL `MATCH` it ran), `min_link`, up to 15 strongest `paths[]` (`path` as "A → B → C", `hops`, `weight`, `link_intensities`), always including a multi-hop path when one exists, and `evidence_note` |
 | `exposed_non_applicants(depth=2)` | "Who else is at risk?", "Should someone downstream have applied?" | Up to 15 businesses downstream of applicants that didn't apply: the chains reaching them, the strongest weight, and any real SBA charge-off |
 
 How `recommend_grants` works:
@@ -77,8 +87,9 @@ It parses each path into nodes and link intensities. Then it applies two rules:
   like hubs.
 - **Strongest path wins.** For each exposed business, only the strongest path is kept.
 
-`depth` is clamped to 1 to 3. Business IDs are checked against `^[A-Za-z0-9._-]{1,64}$` before
-they go into SQL.
+`depth` is clamped to 1 to 3 in every tool. Business IDs are checked against
+`^[A-Za-z0-9._-]{1,64}$` before they go into SQL. The query returns at most 50,000 paths, and
+reaching that limit raises an error rather than silently undercounting.
 
 ### MCP Toolbox tools (`toolbox/tools.yaml`)
 
@@ -103,13 +114,20 @@ public, so jobs aren't counted.
   `EFFECT_CURVE`.
 - **Path weight:** the product along the chain of min(1, intensity ÷ `STRONG_LINK`), × `HOP_DECAY`
   for each hop after the first.
-- **Value of a set of awards:** for each funded applicant, its risk reduction × need multiplier.
-  Then for each downstream business, add risk reduction × `CONTAGION` × uniqueness × path weight
-  × need multiplier. Uniqueness is 1 ÷ (1 + same-industry businesses in the corridor). A
-  business downstream of two grantees counts once, at its best protection.
+- **Value of a set of awards:** each funded applicant is protected by its risk reduction × need
+  multiplier. Each downstream business is protected by risk reduction × `CONTAGION` ×
+  uniqueness × path weight × need multiplier. Uniqueness is 1 ÷ (1 + same-industry businesses in
+  the corridor). Every business, applicant or downstream, counts once, at its best protection.
+  The value is the sum.
+- **Optimized vs reported.** The allocation maximizes the need-weighted value
+  (`need_weighted_priority_total`), and the funded list is in that priority order. The number
+  reported as `expected_closures_avoided_total` (and per grant) is the same sum with the need
+  multiplier set to 1, an unweighted count of closures. Need decides who gets money; it doesn't
+  inflate the count.
 - **Allocation:** greedy. It repeatedly gives the next slice (25% of a request, at least $2,000
   for a first award) to whoever adds the most value per dollar. It stops when the budget or the
-  worthwhile moves run out.
+  worthwhile moves run out. It refuses a non-finite or negative budget, a non-positive request,
+  and duplicate registrations (same ID, or same name and address).
 - **Sensitivity:** it reruns the allocation under five alternatives and reports
   `funded_in_every_scenario`. The alternatives are contagion at 0.10 and at 0.50, a linear
   effect curve, a steeper diminishing curve, and need ignored.
@@ -170,6 +188,10 @@ realistic test replaces `_rows`.
 | `test_robust_hub_is_not_funded_first` | A healthy hub with wide reach is not funded ahead of a distressed, unique supplier |
 | `test_leaf_still_fundable_and_budget_respected` | A leaf with no downstream businesses can still be funded, and the budget is never exceeded |
 | `test_realistic_weak_hub_is_not_funded_first` | Feeds the shape of Tradespace's 194 real paths through `_cascades`: one link at 0.021, every other path starting with a 0.015 link. It fails without the 0.02 cutoff and passes with it |
+| `test_duplicate_registration_is_refused` | Two applications from the same name and address raise an error instead of being funded twice |
+| `test_reported_total_is_unweighted_by_need` | The reported total is the unweighted count, and the need-weighted priority is reported separately |
+| `test_applicant_downstream_of_another_counts_once` | An applicant that is also downstream of another grantee isn't counted twice |
+| `test_path_limit_is_an_error_not_a_silent_truncation` | Hitting the 50,000-path limit raises an error |
 
 ## Deploy
 

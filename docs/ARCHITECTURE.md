@@ -73,6 +73,12 @@ Behaviors worth knowing:
 - **Live or sample.** At startup the backend imports `grant_agent.tools` and checks that
   `recommend_grants` and `get_cascade` exist. If they do, it's **live**. If not (the package is
   missing or still a scaffold), it serves `frontend/sample/` and the UI shows an amber notice.
+  `GRANT_DATA_MODE=live` makes a failed import an error instead, and `GRANT_DATA_MODE=sample`
+  forces the sample. In sample mode, a budget other than the captured $50,000 returns 422.
+- **Failures are explicit.** If live data fails, `/api/recommendation` returns 503 with a short
+  message and logs the cause. `/api/ask` returns 502 if the agent's event list is malformed or
+  reports an error. It answers with the model's final text only, never tool calls, tool
+  responses or thoughts.
 - **Caching.** The recommendation is cached per budget for the life of the instance. The first
   load after a deploy takes about 9 seconds; after that it's instant.
 - **One session per question.** Each "Ask the agent" question starts a fresh session, so the agent
@@ -86,9 +92,9 @@ Behaviors worth knowing:
 |---|---|
 | `agent.py` | Defines `root_agent` (Gemini model from `GEMINI_MODEL`) with three Python tools, plus the Toolbox tools when `TOOLBOX_URL` is set |
 | `prompt.py` | System instruction: who the officer is, which tool answers which question, the answer format, and the rules (every number from a tool, say what's modeled, refuse when the data can't separate two applicants, no race or ethnicity) |
-| `tools.py` | `get_cascade(business_id, depth=2)`: multi-hop GQL over `LocalEconomy`, following `Supplies` forward, skipping any path with a link below 0.02, strongest path per exposed business. `recommend_grants(budget)`: loads applications, tract need, industry alternatives and SBA charge-offs, traces every cascade in one query, then calls the allocator. `exposed_non_applicants()`: businesses downstream of applicants that never applied |
-| `allocator.py` | Pure Python, no BigQuery. Value of a grant = drop in the applicant's closure risk × (1 + contagion × uniqueness × downstream exposure) × neighborhood need. Allocates in slices to maximize expected closures avoided, and reruns under 5 alternative assumptions to show which awards are stable. All assumptions are in one `ASSUMPTIONS` dict |
-| `tests/test_allocator.py` | Three unit tests, no credentials needed (`cd agent && python -m pytest tests`). One feeds the shape of Tradespace's real paths through `_cascades`, to guard the weakest-link rule |
+| `tools.py` | `get_cascade(business_id, depth=2)`: multi-hop GQL over `LocalEconomy`, following `Supplies` forward, skipping any path with a link below 0.02, strongest path per exposed business. Returns the GQL `traversal` and `min_link` it used, and always includes a multi-hop path when one exists. `recommend_grants(budget)`: loads applications, tract need, industry alternatives and SBA charge-offs, traces every cascade in one query, then calls the allocator. `exposed_non_applicants()`: businesses downstream of applicants that never applied |
+| `allocator.py` | Pure Python, no BigQuery. Value of a grant = drop in the applicant's closure risk × (1 + contagion × uniqueness × downstream exposure) × neighborhood need. Allocates in slices to maximize need-weighted protection, counting every business once. Reports the unweighted count of expected closures avoided. Reruns under 5 alternative assumptions to show which awards are stable. Refuses duplicate registrations and invalid budgets or requests. All assumptions are in one `ASSUMPTIONS` dict |
+| `tests/test_allocator.py` | Seven unit tests, no credentials needed (`cd agent && python -m pytest tests`). They cover the robust hub (including the shape of Tradespace's real paths through `_cascades`), leaves, the budget, duplicates, the unweighted total, overlap counted once, and the path limit |
 
 The traversal at the heart of it, in `tools.py`:
 
@@ -201,6 +207,7 @@ secret and redeploy the `toolbox` service (build guide, step 9).
 | grant-desk | `AGENT_URL` | `https://grant-agent-173086820802.us-west2.run.app` | Where "Ask the agent" goes. Without it, `/api/ask` returns 503 |
 | grant-desk | `AGENT_APP` | `grant_agent` | ADK app name |
 | grant-desk | `GOOGLE_CLOUD_PROJECT` | unset (the code's default is the lab project) | Project for BigQuery |
+| grant-desk | `GRANT_DATA_MODE` | unset (`auto`) | `auto` falls back to the sample if the agent package can't be imported; `live` fails instead; `sample` forces the sample |
 | toolbox | config file | `tools` secret in Secret Manager, mounted at `/app/tools.yaml` | Source: [`agent/toolbox/tools.yaml`](../agent/toolbox/tools.yaml) |
 
 Each service also answers on Cloud Run's older URL form (`https://<service>-2t7btqn2ya-wl.a.run.app`).
@@ -226,11 +233,12 @@ The table uses the project-number form.
 | Issue | Effect | Status |
 |---|---|---|
 | The allocator funded Tradespace, a healthy hub with 113 weak generic links, first and in full | Contradicted "don't fund the robust hub" | **Fixed.** The weakest-link rule (PR #12) leaves Tradespace one dependent business, and it isn't funded. The applicant swap (PR #13) put three real cascades in the queue. Sour Flour is now grant 1 |
-| A redeploy of the agent may reset its Gemini location to us-west2 | Every question fails with a 500 | Re-run the settings command above after each agent deploy |
+| A redeploy of the agent may reset its Gemini location to us-west2 | Every question failed with a 500 | Re-run the settings command above after each agent deploy. Since PR #15, the agent refuses to start with a location other than us-central1 or global, so the mistake shows up at deploy time |
 | Two Toolbox services | Confusion about which one is live | The agent uses us-west2; the us-central1 copy is idle |
 | First load after a desk deploy takes about 9 seconds | A slow first impression | Open the desk once before recording |
 | Each question starts a new agent session | Follow-ups don't remember earlier questions | Acceptable for the demo |
-| In sample mode the desk ignores the `budget` parameter | The sample always shows the $50,000 run | Only matters when running `frontend/` without the agent package |
-| The traversal returns at most 50,000 paths, and truncates silently | Cascades would be undercounted if the limit were hit | Not reached here: every 1-to-3-hop `Supplies` path in the corridor totals 26,124 |
+| In sample mode the desk ignored the `budget` parameter | The sample always showed the $50,000 run | **Fixed** (PR #15): other budgets return 422 in sample mode |
+| The traversal returns at most 50,000 paths | Cascades would be undercounted if the limit were hit | **Fixed** (PR #15): hitting the limit is now an error, not a silent truncation. Not reached here: every 1-to-3-hop `Supplies` path in the corridor totals 26,124 |
+| The reported "expected closures avoided" included the need multiplier | The headline number wasn't strictly a count of closures | **Fixed** (PR #15): the reported total is unweighted (4.18); need still drives who is funded |
 | The desk and the agent use the default compute service account | Broader access than needed | Open. See Security and access |
 | No run log of inputs, queries and outputs (a PRD auditability target) | A recommendation can't be replayed later from a log | Open. The allocation is deterministic, so rerunning on the same tables reproduces it |

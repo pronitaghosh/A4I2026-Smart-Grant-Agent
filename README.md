@@ -54,29 +54,32 @@ not compute amounts or cascades.
 
 ### The recommendation on the live data
 
-From the deployed desk on 2026-11-17, with a budget of $50,000 and traversal depth 2.
+`recommend_grants(50000)` on the live tables, 2026-11-17, with traversal depth 2. Grants are
+listed in priority order: closures avoided, weighted toward poorer tracts. The last column is
+the unweighted count.
 
 | # | Business | Award | Closure risk before → after | Businesses downstream | Expected closures avoided |
 |---|---|---|---|---:|---:|
-| 1 | Sour Flour | $5,000 of $5,000 (100%) | 42% → 25% | 97 | 3.02 |
-| 2 | Honeybee Foods (Jollibee) | $9,000 of $9,000 (100%) | 54% → 33% | 1 | 0.23 |
-| 3 | Blue Bottle Coffee | $7,000 of $7,000 (100%) | 51% → 31% | 1 | 0.20 |
-| 4 | Eddy St Bodega | $9,000 of $11,000 (82%) | 41% → 26% | 0 | 0.20 |
-| 5 | San Francisco Proper Hotel, Villon | $6,000 of $11,000 (55%) | 49% → 35% | 0 | 0.15 |
-| 6 | The Warfield Theater | $4,000 of $15,000 (27%) | 35% → 28% | 7 | 0.09 |
-| 7 | Oak Tree Hotel | $3,500 of $14,000 (25%) | 45% → 36% | 0 | 0.09 |
+| 1 | Sour Flour | $5,000 of $5,000 (100%) | 42% → 25% | 97 | 3.14 |
+| 2 | Eddy St Bodega | $9,000 of $11,000 (82%) | 41% → 26% | 0 | 0.15 |
+| 3 | Honeybee Foods (Jollibee) | $9,000 of $9,000 (100%) | 54% → 33% | 1 | 0.17 |
+| 4 | Blue Bottle Coffee | $7,000 of $7,000 (100%) | 51% → 31% | 1 | 0.16 |
+| 5 | San Francisco Proper Hotel, Villon | $6,000 of $11,000 (55%) | 49% → 35% | 0 | 0.13 |
+| 6 | The Warfield Theater | $4,000 of $15,000 (27%) | 35% → 28% | 7 | 0.08 |
+| 7 | Oak Tree Hotel | $3,500 of $14,000 (25%) | 45% → 36% | 0 | 0.07 |
 | 8 | Soliome | $4,000 of $15,000 (27%) | 35% → 28% | 0 | 0.07 |
 | 9 | Non Plus Ultra | $2,000 of $8,000 (25%) | 25% → 20% | 6 | 0.05 |
 | — | Supremo Pizza (runner-up) | not funded, asked $12,000 | 17% | 1 | — |
 | — | Tradespace (the hub) | not funded, asked $11,000 | 9% | 1 | — |
 
-$49,500 allocated, **4.14 expected business closures avoided** in total. Six awards are made
-under every assumption tested: Sour Flour, Honeybee, Blue Bottle, Eddy St Bodega, the Proper
-Hotel and Non Plus Ultra. The other three depend on the assumptions.
+$49,500 allocated, **4.18 expected business closures avoided** in total. Every business,
+applicant or downstream, is counted once. Six awards are made in every assumption set tested:
+Sour Flour, Eddy St Bodega, Blue Bottle, the Proper Hotel, the Warfield Theater and Non Plus
+Ultra. Honeybee, Oak Tree and Soliome depend on the assumptions.
 
 **The graph changes the decision.** By distress alone, Sour Flour ranks 5th of 11. It is grant 1
 because 97 businesses are modeled as depending on it: 69 directly and 28 more two hops out. That
-one $5,000 grant accounts for 3.02 of the 4.14 expected closures avoided.
+one $5,000 grant accounts for 3.14 of the 4.18 expected closures avoided.
 
 **The agent does not fund the biggest hub.** Tradespace (data hosting) has the most supply links
 in the corridor: 113 buyers. But almost all of those links are weak and generic, about 1.5 cents
@@ -101,7 +104,7 @@ These are the two approaches the brief warns about, set against ours.
 | SF Proper Hotel, Villon | 0 | 49% | 0 | — | $11,000 | **$6,000** |
 | Soliome | 0 | 35% | 0 | — | — | **$4,000** |
 | Eddy St Bodega | 0 | 41% | 0 | — | — | **$9,000** |
-| **Expected closures avoided** | | | | 3.62 | 3.84 | **4.14** |
+| **Expected closures avoided** | | | | 3.78 | 3.94 | **4.18** |
 
 - **Centrality only** gives $11,000 to the healthiest applicant, Tradespace, for links that
   carry almost nothing. It also puts $15,000 into the Warfield's small cascade.
@@ -111,8 +114,10 @@ These are the two approaches the brief warns about, set against ours.
   splitting worth more. It reaches Eddy St Bodega, in the corridor's poorest tract (36% poverty),
   which both rankings skip.
 
-The totals are scored with our own model, so ours wins partly by construction. What matters is
-who moves between the lists, and that each move has a reason the officer can say out loud.
+The totals use our own model, so treat them with care. Our allocator optimizes a need-weighted
+version of that model, but these totals are the unweighted count. Ours leads on that count too.
+What matters more is who moves between the lists, and that each move has a reason the officer
+can say out loud.
 
 Applicant financials are illustrative. The businesses are real, but the revenue drop, cash on
 hand and requested amount are generated for the demo, and flagged `illustrative = TRUE`.
@@ -151,9 +156,10 @@ flowchart LR
 3. **The judgment.** [`allocator.py`](agent/grant_agent/allocator.py) is plain Python with no
    BigQuery calls. A grant's value is the drop in the applicant's closure risk × (1 + contagion ×
    uniqueness × downstream exposure) × neighborhood need. It hands out the budget in 25% slices of
-   each request, always to whoever buys the most expected closures avoided per dollar. A business
-   downstream of two grantees counts once. It then reruns under five alternative assumptions to
-   show which awards are stable.
+   each request, always to whoever buys the most need-weighted protection per dollar. Every
+   business, applicant or downstream, counts once, at its best protection. The total it reports
+   is the unweighted count of expected closures avoided. It then reruns under five alternative
+   assumptions to show which awards are stable.
 4. **The agent.** [`agent.py`](agent/grant_agent/agent.py) is an ADK agent on Gemini 2.5 Flash
    with our three Python tools and four MCP Toolbox tools. [`prompt.py`](agent/grant_agent/prompt.py)
    sets its rules: every number from a tool, call modeled links modeled, say so when the data can't
@@ -275,7 +281,7 @@ All commands run from the repo root. Python 3.12.
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install -r agent/grant_agent/requirements.txt -r frontend/requirements.txt pytest
-cd agent && ../.venv/bin/python -m pytest tests -q        # 3 passed
+cd agent && ../.venv/bin/python -m pytest tests -q        # 7 passed
 ```
 
 **Run the grant desk locally.** If the agent package and BigQuery credentials are available,

@@ -29,7 +29,7 @@ answers come from the same code and data.
 - **Case view**, for the selected applicant:
   - status ("Fund in full", "Partial grant", "Not funded") and amount
   - closure risk before → after the grant
-  - whether the award holds under every assumption tested
+  - whether the applicant receives some funding in every assumption set tested, or in how many
   - the **cascade line map:** the applicant on the left, one column per hop, line thickness by
     link strength
   - the agent's reasons
@@ -49,15 +49,17 @@ answers come from the same code and data.
 | Method and path | Does | Source |
 |---|---|---|
 | `GET /` | Serves `static/` | — |
-| `GET /api/recommendation?budget=50000` | The funding queue: the full `recommend_grants()` output, plus `neighborhood` (each applicant's tract, poverty and no-vehicle rate) and `corridor_poverty`. Also `source`: `"live"` or `"sample"` | `grant_agent.tools.recommend_grants()`, then two queries on `business_tract` |
+| `GET /api/recommendation?budget=50000` | The funding queue: the full `recommend_grants()` output, plus `neighborhood` (each applicant's tract, poverty and no-vehicle rate) and `corridor_poverty`. Also `source`: `"live"` or `"sample"`. 503 if live data fails; 422 in sample mode for any budget other than $50,000 | `grant_agent.tools.recommend_grants()`, then two queries on `business_tract` |
 | `GET /api/cascade/{business_id}` | One applicant's cascade for the line map. 404 if the business doesn't exist | `grant_agent.tools.get_cascade()` |
 | `POST /api/ask` `{"question": "...", "business_id": "16"}` | Creates an ADK session on the deployed agent, sends the question (with the business ID appended) to `POST /run`, and returns `{"answer": "<the agent's last text>"}` | The agent at `AGENT_URL` |
 
 Error handling for `/api/ask`:
 
 - **503** when `AGENT_URL` isn't set.
-- **502** when the agent can't be reached, returns an HTTP error, or answers without text. The
-  message says which.
+- **502** when the agent can't be reached or returns an HTTP error. Also when its event list is
+  malformed, reports an error, or has no final text. The message says which.
+- The answer is the model's last complete text. Partial events, tool calls, tool responses and
+  thoughts are skipped.
 - The request waits up to 120 seconds.
 
 ## Live or sample
@@ -66,9 +68,13 @@ At startup, `app.py` puts `agent/` on the Python path and imports `grant_agent.t
 
 - **Live:** the import works and the module has `recommend_grants` and `get_cascade`. The
   deployed desk runs this way.
-- **Sample:** anything fails, such as the package missing, its dependencies missing, or the
-  scaffold not written yet. The desk then serves `sample/` and the UI shows an amber notice with
-  the capture date.
+- **Sample:** the import fails, for example because the package or its dependencies are
+  missing. The desk then serves `sample/`, logs why, and the UI shows an amber notice with the
+  capture date.
+
+`GRANT_DATA_MODE` overrides this. `live` makes a failed import stop the server, so a broken
+deploy can't quietly fall back to old numbers. `sample` forces the sample. The default `auto`
+behaves as above.
 
 To refresh the sample, save the live `/api/recommendation` and `/api/cascade/{id}` output in the
 same shape as the files in `sample/`.
@@ -83,6 +89,7 @@ deploy takes about 9 seconds; after that it's instant.
 | `GOOGLE_CLOUD_PROJECT` | `qwiklabs-gcp-04-524776bdd295` | Project for BigQuery. Set before the agent's tools are imported |
 | `AGENT_URL` | unset | The deployed agent's base URL. Without it, "Ask the agent" returns 503 |
 | `AGENT_APP` | `grant_agent` | ADK app name used in the session and `/run` calls |
+| `GRANT_DATA_MODE` | `auto` | `auto`, `live` or `sample`; see Live or sample |
 | `GCLOUD_ACCESS_TOKEN` | unset | Local development only: a `gcloud auth print-access-token` value, used instead of application-default credentials |
 | `PORT` | `8080` | Port in the container |
 
