@@ -541,12 +541,23 @@ def audit(budget: float = 50000) -> dict:
         # Never pair a live plan with a sample audit: they would describe different plans.
         if not hasattr(agent_tools, "audit_allocation"):
             raise HTTPException(404, "The agent's audit_allocation tool isn't merged yet.")
-        return {"source": "live", **_live_audit(budget)}
+        try:
+            return {"source": "live", **_live_audit(budget)}
+        except HTTPException:
+            raise
+        except Exception as exc:  # same contract as /api/recommendation: a 503, not a stack trace
+            logging.getLogger(__name__).exception("Live equity audit failed")
+            raise HTTPException(503, "Live data is unavailable; retry or use saved sample mode.") from exc
     if not (SAMPLE / "audit_allocation.json").exists():
         raise HTTPException(404, "No equity audit sample captured yet (see Step 10).")
     s = _sample("audit_allocation")
+    if budget != s["audit_allocation"]["plan"]["budget"]:
+        raise HTTPException(422, "This saved sample supports only its captured $50,000 budget.")
     return {"source": "sample", "captured": s["meta"]["captured"], **s["audit_allocation"]}
 ```
+
+It follows the desk's rules for `/api/recommendation`: a live failure is a 503 with a short message
+(the details go to the log), and sample mode refuses a budget the sample wasn't captured for (422).
 
 Raise the sample cache, since there are now three sample files. Replace:
 
@@ -566,6 +577,9 @@ def _sample(name: str) -> dict:
 calls compute the plan once and the audit describes exactly the plan on screen.
 
 ## Step 9: Fix local live mode in `frontend/app.py` (2 min)
+
+**Status: already done on `main`** by the review fixes (`f23bc85`): `app.py` now sets
+`agent_tools._client = lambda: _bq`. Skip this step; it is kept below for the record.
 
 The desk's local-development path injects a token-based BigQuery client with
 `agent_tools._bq = _bq`. Since BUILD_GUIDE Step 7, `tools.py` creates its client on first use
