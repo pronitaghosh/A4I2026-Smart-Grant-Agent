@@ -1,13 +1,14 @@
-# MCP Toolbox for Databases config (format for Toolbox v1.x: one YAML document per
-# source / tool / toolset). Deployed to Cloud Run by deploy.sh as the secret "tools".
-# Read-only and limited to the a4i_econ dataset: the agent can only run the SQL below.
-# The project comes from the GOOGLE_CLOUD_PROJECT environment variable (set by the deploy
-# pipeline / deploy.sh). Tables are written dataset.table, which BigQuery resolves
-# against that same project, so no project ID is stored in this repo.
+# MCP Toolbox for Databases config, in Toolbox's flat format (one YAML document per
+# source / tool / toolset; the older nested format still works but gets no new features).
+# Deployed to Cloud Run as the secret "tools". Read-only and limited to the a4i_econ
+# dataset: the agent can only run the SQL below.
+# The project comes from the PROJECT_ID environment variable on the Cloud Run service (set by
+# the deploy pipeline and by deploy.sh). Tables are written dataset.table, which BigQuery
+# resolves against that same project, so no project ID is stored in this repo.
 kind: source
 name: bq
 type: bigquery
-project: ${GOOGLE_CLOUD_PROJECT}
+project: ${PROJECT_ID}
 location: US
 readOnly: true
 allowedDatasets:

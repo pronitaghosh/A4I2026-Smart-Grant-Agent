@@ -13,7 +13,10 @@ if [[ -z "${PROJECT_ID}" || "${PROJECT_ID}" == "(unset)" ]]; then
   echo "ERROR: no project. Set PROJECT_ID, or run: gcloud config set project YOUR_PROJECT_ID" >&2
   exit 1
 fi
-REGION="${REGION:-us-central1}"
+# Region: REGION if set (pipeline), else the region the team's Cloud Run services already use,
+# else us-west2 (the PRD's region).
+REGION="${REGION:-$(gcloud run services list --project "${PROJECT_ID}" --format="value(region)" --limit=1 2>/dev/null || true)}"
+REGION="${REGION:-us-west2}"
 SA_NAME="toolbox-sa"
 SA="${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 IMAGE="${IMAGE:-us-central1-docker.pkg.dev/database-toolbox/toolbox/toolbox:latest}"
@@ -47,7 +50,7 @@ gcloud run deploy toolbox \
   --service-account "${SA}" \
   --region "${REGION}" \
   --set-secrets "/app/tools.yaml=tools:latest" \
-  --set-env-vars "GOOGLE_CLOUD_PROJECT=${PROJECT_ID}" \
+  --set-env-vars "PROJECT_ID=${PROJECT_ID}" \
   --args="--config=/app/tools.yaml","--address=0.0.0.0","--port=8080" \
   --min-instances=1 \
   --no-allow-unauthenticated

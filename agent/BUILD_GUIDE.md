@@ -780,49 +780,85 @@ so the agent cannot run arbitrary queries.
 Two files, both in `agent/toolbox/`:
 
 - **`tools.yaml`**: four read-only lookups (`list_applications`, `find_business`,
-  `loan_history`, `tract_profile`) grouped as the toolset `grant_toolset`. It uses the
-  **Toolbox v1.x format**, with one YAML document per source, tool and toolset, separated by
-  `---`, each with a `type:`. Older blog posts show a single file with `sources:` and `tools:`
-  maps; v1.x doesn't read that. The source is `readOnly: true` and limited to `a4i_econ`.
-  It holds **no project ID**: the source reads `${GOOGLE_CLOUD_PROJECT}`, which `deploy.sh` sets
-  on the Cloud Run service, and tables are written `a4i_econ.table`.
+  `loan_history`, `tract_profile`) grouped as the toolset `grant_toolset`. It uses Toolbox's
+  **flat format**: one YAML document per source, tool and toolset, separated by `---`, each with
+  a `type:`. The older nested format (`sources:` and `tools:` maps) still works in v1.x but gets
+  no new features. The source is `readOnly: true` and limited to `a4i_econ`.
+  It holds **no project ID**: the source reads `${PROJECT_ID}`, which the deploy sets as an
+  environment variable on the Cloud Run service, and tables are written `a4i_econ.table`.
 - **`deploy.sh`**: enables the APIs, creates the `toolbox-sa` service account (BigQuery Job
   User, BigQuery Data Viewer, Secret Accessor), uploads `tools.yaml` as the secret `tools`,
-  deploys the `toolbox` Cloud Run service with `--config=/app/tools.yaml` and
+  deploys the `toolbox` Cloud Run service with `PROJECT_ID` set, `--config=/app/tools.yaml` and
   `--min-instances=1`, then tries to allow unauthenticated calls. You can safely re-run it after
   editing `tools.yaml`.
 
 Run it **in Cloud Shell** (it already has `gcloud`, signed in as your lab account). The project
-comes from `PROJECT_ID` if your pipeline sets it, otherwise from `gcloud config`:
+comes from `PROJECT_ID` if your pipeline sets it, otherwise from `gcloud config`. The region comes
+from `REGION` if set, otherwise from the region your Cloud Run services already use, otherwise
+`us-west2`:
 
 ```bash
-PROJECT_ID=your-project-id bash agent/toolbox/deploy.sh
+export PROJECT_ID=$(gcloud config get-value project)
+export REGION=$(gcloud run services list --format="value(region)" --limit=1)
+bash agent/toolbox/deploy.sh
 ```
 
-It prints the service URL at the end. Put it into `TOOLBOX_URL` in `agent/grant_agent/.env`.
+**Or by hand**, the same steps as the script:
 
-- **"BLOCKED by organisation policy"** at the last step: the lab doesn't allow public services.
-  The Toolbox stays private, so give the agent's service account the **Cloud Run Invoker** role
-  on `toolbox`, and have the agent send an ID token.
+```bash
+export PROJECT_ID=$(gcloud config get-value project)
+export REGION=$(gcloud run services list --format="value(region)" --limit=1)
+gcloud services enable run.googleapis.com secretmanager.googleapis.com
+
+gcloud iam service-accounts create toolbox-sa
+for role in roles/bigquery.jobUser roles/bigquery.dataViewer roles/secretmanager.secretAccessor; do
+  gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member serviceAccount:toolbox-sa@$PROJECT_ID.iam.gserviceaccount.com --role $role
+done
+
+gcloud secrets create tools --data-file=agent/toolbox/tools.yaml
+# after edits: gcloud secrets versions add tools --data-file=agent/toolbox/tools.yaml
+
+gcloud run deploy toolbox \
+  --image us-central1-docker.pkg.dev/database-toolbox/toolbox/toolbox:latest \
+  --service-account toolbox-sa@$PROJECT_ID.iam.gserviceaccount.com \
+  --region ${REGION} \
+  --set-secrets "/app/tools.yaml=tools:latest" \
+  --set-env-vars PROJECT_ID=$PROJECT_ID \
+  --args="--config=/app/tools.yaml","--address=0.0.0.0","--port=8080" \
+  --min-instances=1 \
+  --allow-unauthenticated   # hackathon shortcut; read-only predefined SQL over public data
+```
+
+`--config` replaces `--tools-file`, which Toolbox v1.x deprecates (it still works for now).
+
+Put the service URL into `TOOLBOX_URL` in `agent/grant_agent/.env`.
+
+- **"BLOCKED by organisation policy"** when allowing unauthenticated calls: the lab doesn't allow
+  public services. The Toolbox stays private, so give the agent's service account the **Cloud Run
+  Invoker** role on `toolbox`, and have the agent send an ID token.
 - **The tools fail when called:** the tables they read (`applications` and `business_tract` from
   Step 3; `borrowed_from` from the data lane) must exist. If your corridor has no
   `borrowed_from`, delete the `loan_history` document and its line in the toolset, then re-run.
-- **Logs:** `gcloud run services logs read toolbox --region us-central1`.
+- **Logs:** `gcloud run services logs read toolbox --region ${REGION}`.
 
 ---
 
 ## 10. Deploy the agent to Cloud Run (deploy early, redeploy often)
 
 ```bash
+
+export TOOLBOX_URL=https://toolbox-xxxx.a.run.app
+
 cd agent
 adk deploy cloud_run \
-  --project $PROJECT_ID --region us-central1 \
+  --project $PROJECT_ID --region ${REGION} \
   --service_name grant-agent --with_ui \
   ./grant_agent
 
 # Make sure the runtime has the env vars and minimum instances:
-gcloud run services update grant-agent --region us-central1 --min-instances=1 \
-  --set-env-vars GOOGLE_GENAI_USE_VERTEXAI=TRUE,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=us-central1,GEMINI_MODEL=gemini-2.5-flash,TOOLBOX_URL=https://toolbox-xxxx.a.run.app
+gcloud run services update grant-agent --region ${REGION} --min-instances=1 \
+  --set-env-vars GOOGLE_GENAI_USE_VERTEXAI=TRUE,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=${REGION},GEMINI_MODEL=gemini-2.5-flash,TOOLBOX_URL=${TOOLBOX_URL}
 ```
 
 The Cloud Run service account needs **BigQuery Job User**, **BigQuery Data Viewer** and **Vertex
