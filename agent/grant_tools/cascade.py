@@ -10,6 +10,7 @@ applicant traces who is exposed if the applicant closes.
 
 from __future__ import annotations
 
+import copy
 import os
 from functools import lru_cache
 from pathlib import Path
@@ -24,13 +25,13 @@ LOCATION = "US"
 # buys a little from (data hosting, IT services) fall below it.
 MIN_LINK = 0.02
 
-# Two cascades whose exposure differs by less than this share are treated as
+# Two values that differ by less than this share are treated as
 # indistinguishable: the agent must say the graph cannot separate them.
 TIE_MARGIN = 0.10
 
 TOP_NAMED = 5
 
-CASCADE_SQL = (Path(__file__).with_name("cascade.sql")).read_text()
+CASCADE_SQL = Path(__file__).with_name("cascade.sql").read_text()
 
 MODELED_NOTE = (
     "Supply links are modeled: the industry-to-industry purchase rates are published "
@@ -42,33 +43,92 @@ STRENGTH_NOTE = (
     "back to the applicant, multiplied along the chain."
 )
 
+# The corridor data does not change during a session, so cascades and business
+# records are cached for the life of the process.
+_cascades: dict[tuple[str, float], list[dict]] = {}
+_businesses: dict[str, dict] = {}
+
 
 @lru_cache(maxsize=1)
 def _client() -> bigquery.Client:
     return bigquery.Client(project=PROJECT, location=LOCATION)
 
 
-def _query(sql: str, params: list[bigquery.ScalarQueryParameter]) -> list[dict]:
+def _query(sql: str, params: list) -> list[dict]:
     job = _client().query(sql, job_config=bigquery.QueryJobConfig(query_parameters=params))
     return [dict(row.items()) for row in job.result()]
 
 
-def _business(business_id: str) -> dict:
-    rows = _query(
-        "SELECT business_id, name, address, naics4 FROM a4i_econ.businesses "
-        "WHERE business_id = @id",
-        [bigquery.ScalarQueryParameter("id", "STRING", business_id)],
-    )
-    if not rows:
-        raise ValueError(f"No business with business_id {business_id!r} in the corridor.")
-    return rows[0]
+def businesses(business_ids: list[str]) -> dict[str, dict]:
+    """Name, address and industry for each business_id, fetched in one query."""
+    missing = [i for i in dict.fromkeys(business_ids) if i not in _businesses]
+    if missing:
+        rows = _query(
+            "SELECT business_id, name, address, naics4 FROM a4i_econ.businesses "
+            "WHERE business_id IN UNNEST(@ids)",
+            [bigquery.ArrayQueryParameter("ids", "STRING", missing)],
+        )
+        for row in rows:
+            _businesses[row["business_id"]] = row
+    unknown = [i for i in business_ids if i not in _businesses]
+    if unknown:
+        raise ValueError(f"No business with business_id {', '.join(unknown)} in the corridor.")
+    return {i: dict(_businesses[i]) for i in business_ids}
+
+
+def _dedupe(rows: list[dict]) -> list[dict]:
+    """Count each location once. The registry holds some businesses twice under the
+    same name and address; rows arrive strongest first, so the first one is kept."""
+    seen: set[tuple[str, str]] = set()
+    out = []
+    for e in rows:
+        key = (e["name"].strip().lower(), (e["address"] or "").strip().lower())
+        if key in seen:
+            continue
+        seen.add(key)
+        e["strength"] = round(e["strength"], 4)
+        e["weakest_link"] = round(e["weakest_link"], 4)
+        e["route_ids"] = list(e["route_ids"])
+        out.append(e)
+    return out
+
+
+def trace_many(business_ids: list[str], min_link: float = MIN_LINK) -> dict[str, list[dict]]:
+    """Exposed businesses for several applicants, from one graph query.
+
+    Returns a mapping from each business_id to its exposed businesses, strongest
+    first, each with hops, strength, weakest link, route and route_ids.
+    """
+    missing = [i for i in dict.fromkeys(business_ids) if (i, min_link) not in _cascades]
+    if missing:
+        rows = _query(
+            CASCADE_SQL,
+            [
+                bigquery.ArrayQueryParameter("seed_ids", "STRING", missing),
+                bigquery.ScalarQueryParameter("min_link", "FLOAT64", min_link),
+            ],
+        )
+        grouped: dict[str, list[dict]] = {i: [] for i in missing}
+        for row in rows:
+            grouped[row.pop("seed_id")].append(row)
+        for i, exposed in grouped.items():
+            _cascades[(i, min_link)] = _dedupe(exposed)
+    return {i: copy.deepcopy(_cascades[(i, min_link)]) for i in business_ids}
+
+
+def summarize(exposed: list[dict]) -> dict:
+    return {
+        "businesses_exposed": len(exposed),
+        "two_or_more_hops": sum(1 for e in exposed if e["hops"] >= 2),
+        "exposure": round(sum(e["strength"] for e in exposed), 3),
+    }
 
 
 def trace_cascade(business_id: str, min_link: float = MIN_LINK) -> dict:
     """Find the businesses exposed if this business closes.
 
     Follows Supplies forward from the business for 1 to 3 hops in the BigQuery
-    property graph a4i_econ.econ_graph, keeps only chains whose every link is at
+    property graph a4i_econ.LocalEconomy, keeps only chains whose every link is at
     least min_link, and keeps the strongest such path to each exposed business.
 
     Args:
@@ -79,36 +139,12 @@ def trace_cascade(business_id: str, min_link: float = MIN_LINK) -> dict:
         The applicant, every exposed business with hops, strength and route,
         a summary, and the GQL query that produced it.
     """
-    exposed = _query(
-        CASCADE_SQL,
-        [
-            bigquery.ScalarQueryParameter("seed_id", "STRING", business_id),
-            bigquery.ScalarQueryParameter("min_link", "FLOAT64", min_link),
-        ],
-    )
-    # The registry holds some businesses twice under the same name and address
-    # (e.g. two license records for one location). Count each location once,
-    # keeping its strongest path; rows arrive sorted strongest first.
-    seen: set[tuple[str, str]] = set()
-    deduped = []
-    for e in exposed:
-        key = (e["name"].strip().lower(), (e["address"] or "").strip().lower())
-        if key in seen:
-            continue
-        seen.add(key)
-        e["strength"] = round(e["strength"], 4)
-        e["weakest_link"] = round(e["weakest_link"], 4)
-        deduped.append(e)
-    exposed = deduped
+    exposed = trace_many([business_id], min_link)[business_id]
     return {
-        "applicant": _business(business_id),
+        "applicant": businesses([business_id])[business_id],
         "min_link": min_link,
         "exposed": exposed,
-        "summary": {
-            "businesses_exposed": len(exposed),
-            "two_or_more_hops": sum(1 for e in exposed if e["hops"] >= 2),
-            "exposure": round(sum(e["strength"] for e in exposed), 3),
-        },
+        "summary": summarize(exposed),
         "query": CASCADE_SQL,
     }
 
@@ -152,7 +188,6 @@ def compare_cascades(applicant_id: str, runner_up_id: str, min_link: float = MIN
     """
     a = trace_cascade(applicant_id, min_link)
     r = trace_cascade(runner_up_id, min_link)
-    ids_a = {e["business_id"] for e in a["exposed"]}
     ids_r = {e["business_id"] for e in r["exposed"]}
     only_a = [e for e in a["exposed"] if e["business_id"] not in ids_r]
 
@@ -165,7 +200,7 @@ def compare_cascades(applicant_id: str, runner_up_id: str, min_link: float = MIN
     return {
         "applicant": {**a["applicant"], **a["summary"]},
         "runner_up": {**r["applicant"], **r["summary"]},
-        "shared_businesses": len(ids_a & ids_r),
+        "shared_businesses": len({e["business_id"] for e in a["exposed"]} & ids_r),
         "only_applicant_protects": [_label(e, [x["name"] for x in only_a]) for e in only_a[:TOP_NAMED]],
         "only_applicant_count": len(only_a),
         "verdict": verdict,
