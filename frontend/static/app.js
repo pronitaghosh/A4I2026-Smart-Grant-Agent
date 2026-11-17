@@ -293,22 +293,45 @@ function animateLines(root) {
 }
 
 /* Ask the agent */
+
+// The agent answers in Markdown (tables, lists, bold). Render it, sanitized because it
+// is model output. The libraries load on first use; if the CDN is unreachable the
+// answer still shows, as plain text.
+let markdownLibs = null;
+async function renderMarkdown(target, text) {
+  try {
+    markdownLibs ??= Promise.all([
+      import("https://cdn.jsdelivr.net/npm/marked@15.0.12/lib/marked.esm.js"),
+      import("https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.es.mjs"),
+    ]);
+    const [{ marked }, { default: DOMPurify }] = await markdownLibs;
+    target.innerHTML = DOMPurify.sanitize(marked.parse(text, { gfm: true }));
+    target.querySelectorAll("table").forEach((t) => t.replaceWith(h("div", { class: "table-scroll" }, t.cloneNode(true))));
+  } catch {
+    markdownLibs = null;
+    target.textContent = text;
+  }
+}
+
 function askForm(a, st) {
-  const reply = h("p", { class: "ask-reply", "aria-live": "polite" });
+  const reply = h("div", { class: "ask-reply", "aria-live": "polite" });
   const prompt = st === "not_funded" ? `Why isn't ${a.name} funded?` : `Why fund ${a.name} and not the runner-up?`;
   const input = h("input", { id: "ask-input", name: "question", type: "text", autocomplete: "off", placeholder: prompt });
   const form = h("form", {
     onsubmit: async (ev) => {
       ev.preventDefault();
       const question = input.value.trim() || prompt;
-      reply.textContent = "Asking the agent…";
+      reply.className = "ask-reply pending";
+      reply.textContent = "Asking the agent… this can take up to 30 seconds.";
       try {
         const res = await getJSON("/api/ask", {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ question, business_id: a.business_id }),
         });
-        reply.textContent = res.answer;
+        reply.className = "ask-reply answer";
+        await renderMarkdown(reply, res.answer);
       } catch (e) {
+        reply.className = "ask-reply error";
         reply.textContent = e.message;
       }
     },
