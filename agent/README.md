@@ -1,41 +1,193 @@
-# Your agent goes here
+# agent/
 
-This folder is empty on purpose.
+The Smart Grant Agent: an [ADK](https://adk.dev/) agent on Gemini that recommends who to fund,
+how much and why. It also holds the tools the agent calls, the allocator that makes the decision,
+the MCP Toolbox config and the tests.
 
-We built the on-ramp: a real commercial corridor, real businesses, one fully real
-business-to-business relationship, two modeled ones built on published federal rates, a
-neighborhood need signal, and a validation suite that tells you plainly whether any of it is
-wrong. We did not build the vehicle. The design decisions in your agent are what you are judged
-on.
+Deployed as the Cloud Run service `grant-agent`, at
+https://grant-agent-173086820802.us-west2.run.app. The grant desk (`frontend/`) bundles the same
+`grant_agent` package, so the desk and the agent always show the same numbers.
 
-## What has to be true of what you build here
+| Path | What it is |
+|---|---|
+| [`grant_agent/agent.py`](grant_agent/agent.py) | `root_agent`: the model, the instruction and the tool list |
+| [`grant_agent/prompt.py`](grant_agent/prompt.py) | `SYSTEM_INSTRUCTION`: which tool answers which question, the answer format, the rules |
+| [`grant_agent/tools.py`](grant_agent/tools.py) | The three Python tools, and the multi-hop graph traversal behind them |
+| [`grant_agent/allocator.py`](grant_agent/allocator.py) | The judgment layer: closure risk, path weights, allocation, sensitivity. Pure Python, no BigQuery |
+| [`grant_agent/requirements.txt`](grant_agent/requirements.txt) | `google-adk[toolbox]`, `google-cloud-bigquery`, `toolbox-core` |
+| [`toolbox/tools.yaml`](toolbox/tools.yaml) | MCP Toolbox for Databases config: four read-only, parameterized SQL tools |
+| [`tests/test_allocator.py`](tests/test_allocator.py) | Allocator unit tests |
+| [`grant_tools/`](grant_tools/) | A reference cascade query and memo-reason writer. Tested, but not called by the agent |
+| [`BUILD_GUIDE.md`](BUILD_GUIDE.md) | The step-by-step guide this package was built from, with the officer questions to test against |
 
-- **An ADK agent**, in Python.
-- **At least one tool you built yourself.** A Python function tool, or one you defined in MCP
-  Toolbox—either counts. The obvious candidate wraps your cascade query. The more valuable one
-  holds the logic that is not a single query: deciding what counts as exposure, weighting a path,
-  turning a set of paths into a funding recommendation with an amount attached. Consuming only
-  prebuilt generic tools and calling that your design does not count.
-- **At least one Google-managed MCP server, consumed.** Do not author your own—use BigQuery's
-  built-in server or the [MCP Toolbox for Databases](https://github.com/googleapis/mcp-toolbox).
-- **Deployed to Google Cloud**—Agent Runtime or Cloud Run, your choice.
-- **Your required differentiator: a BigQuery property graph, genuinely traversed.** Your agent
-  must run a real multi-hop `MATCH`. A single-hop query, or a `JOIN` with the word "graph" in the
-  variable name, does not count—and it is the most common way a team misses the point while
-  appearing to hit it.
+## The agent
 
-## The thing worth remembering while you build
+`root_agent` (in `agent.py`) is an `Agent` named `grant_agent`:
 
-**A graph makes a consequence visible. It does not make the decision.**
+- **Model:** `GEMINI_MODEL`, default `gemini-2.5-flash`, through Vertex AI.
+- **Tools:** our three Python function tools. When `TOOLBOX_URL` is set, it also gets the
+  Toolbox's `grant_toolset` through ADK's `ToolboxToolset`. That connects on first use, so the
+  agent still loads if the Toolbox is down.
+- **Instruction:** `prompt.py`. It routes questions to tools: "Who should we fund?" goes to
+  `recommend_grants`, "Why this one?" to `get_cascade`, "Who else is exposed?" to
+  `exposed_non_applicants`, and lookups to the Toolbox. It also fixes the answer format: an award
+  table, reasons with the strongest chain written A → B → C, the runner-up, the assumptions, the
+  evidence note and the neighborhood. And it sets the rules:
+  - Every number comes from a tool result. If none gives it, say so.
+  - Say "expected closures avoided", never "jobs saved".
+  - Never recommend a business just because it is the most connected.
+  - Call a leaf a leaf; that alone isn't a reason to reject it.
+  - If two applicants are within about 10% of each other, say the data can't separate them.
+  - Describe modeled supply links as modeled.
+  - No race or ethnicity in any reasoning.
 
-The most connected business in your corridor is not automatically the best investment—it may
-simply be the most robust one. A business three hops downstream with a weak coefficient is barely
-affected by anything. And two of your three edge types are modeled by us, which should change
-how much weight a recommendation carries.
+## Tools
 
-An agent that ranks by centrality and funds the top of the list has rebuilt Section 2's wrong
-answer with extra steps. What you do *after* the traversal—deciding what exposure means,
-what the money actually changes, and what you are assuming—is where this becomes useful instead
-of merely clever.
+ADK sends each tool's docstring to Gemini as its description.
 
-See Section 13 of the notebook for the DDL shape and the seven traps.
+### Python tools (`grant_agent/tools.py`)
+
+| Tool | Use it for | Returns |
+|---|---|---|
+| `recommend_grants(budget=50000, depth=2)` | "Who should we fund?", "What does $X change?" | `budget`, `allocated`, `unallocated`, `expected_closures_avoided_total`, `recommended[]` and `not_funded[]` (per applicant: `award`, `pct_of_request`, `pct_of_budget`, `baseline_risk`, `risk_after_award`, `downstream_exposed`, `closures_avoided_by_this_grant`, `closures_avoided_per_10k_if_fully_funded`, `reasons[]`), `runner_up`, `weakest_funded`, `assumptions`, `sensitivity`, `evidence_note` |
+| `get_cascade(business_id, depth=2)` | "What does this business hold up?", "Show me why" | `business`, `exposed_count`, `by_hop`, `local_alternatives_same_industry`, `is_leaf`, up to 15 strongest `paths[]` (`path` as "A → B → C", `hops`, `weight`, `link_intensities`), `evidence_note` |
+| `exposed_non_applicants(depth=2)` | "Who else is at risk?", "Should someone downstream have applied?" | Up to 15 businesses downstream of applicants that didn't apply: the chains reaching them, the strongest weight, and any real SBA charge-off |
+
+How `recommend_grants` works:
+
+1. It runs four BigQuery queries: the applications joined to businesses, tract need and
+   same-industry counts; the corridor's average poverty; SBA charge-offs; and **one graph
+   traversal for all applicants**.
+2. It builds an `allocator.Applicant` for each applicant.
+3. It calls `allocator.recommend()`.
+
+The traversal (`_cascades`) runs a quantified-path GQL query:
+
+```sql
+GRAPH a4i_econ.LocalEconomy
+MATCH p = (seed:Business)-[:Supplies]->{1,2}(x:Business)
+WHERE seed.business_id IN (...) AND x.business_id != seed.business_id
+RETURN seed.business_id AS seed_id, TO_JSON(p) AS path_json
+```
+
+It parses each path into nodes and link intensities. Then it applies two rules:
+
+- **Weakest-link cutoff.** Any path with a link below **0.02** (2 cents per input dollar) is
+  skipped. This is what stops generic suppliers, like Tradespace's data hosting, from looking
+  like hubs.
+- **Strongest path wins.** For each exposed business, only the strongest path is kept.
+
+`depth` is clamped to 1 to 3. Business IDs are checked against `^[A-Za-z0-9._-]{1,64}$` before
+they go into SQL.
+
+### MCP Toolbox tools (`toolbox/tools.yaml`)
+
+The Toolbox runs only these four predefined, parameterized queries, so the agent can't run
+arbitrary SQL.
+
+| Tool | Returns |
+|---|---|
+| `list_applications` | All applications, with business, address, industry, amount requested, financials and hardship note |
+| `find_business(name_contains)` | Up to 10 businesses whose name contains the text, with `business_id` |
+| `loan_history(business_id)` | Real SBA 7(a) loans: bank, amount, date, status, whether charged off |
+| `tract_profile(business_id)` | Tract poverty, no-vehicle rate, public assistance rate, median income (ACS 2019) |
+
+## The allocator (`grant_agent/allocator.py`)
+
+The unit of value is **expected business closures avoided**. Per-business employment isn't
+public, so jobs aren't counted.
+
+- **Closure risk** (illustrative, from the application): 5% + 50% × revenue drop + 35% × cash
+  shortfall below six months, plus 10 points for a prior SBA charge-off. Clamped to 2–90%.
+- **Risk reduction from a grant:** baseline risk × `MAX_RISK_REDUCTION` × (award ÷ request) ^
+  `EFFECT_CURVE`.
+- **Path weight:** the product along the chain of min(1, intensity ÷ `STRONG_LINK`), × `HOP_DECAY`
+  for each hop after the first.
+- **Value of a set of awards:** for each funded applicant, its risk reduction × need multiplier.
+  Then for each downstream business, add risk reduction × `CONTAGION` × uniqueness × path weight
+  × need multiplier. Uniqueness is 1 ÷ (1 + same-industry businesses in the corridor). A
+  business downstream of two grantees counts once, at its best protection.
+- **Allocation:** greedy. It repeatedly gives the next slice (25% of a request, at least $2,000
+  for a first award) to whoever adds the most value per dollar. It stops when the budget or the
+  worthwhile moves run out.
+- **Sensitivity:** it reruns the allocation under five alternatives and reports
+  `funded_in_every_scenario`. The alternatives are contagion at 0.10 and at 0.50, a linear
+  effect curve, a steeper diminishing curve, and need ignored.
+
+Every assumption is in one dict, `ASSUMPTIONS`, and is returned with every recommendation:
+
+| Assumption | Value | Meaning |
+|---|---|---|
+| `STRONG_LINK` | 0.05 | A supplier worth 5 cents per dollar of the buyer's output is a full-strength dependency |
+| `HOP_DECAY` | 0.5 | Each extra hop halves the exposure |
+| `CONTAGION` | 0.25 | Chance a buyer closes when a full-strength local supplier closes and isn't replaced |
+| `MAX_RISK_REDUCTION` | 0.40 | Fully funding a request cuts the applicant's closure risk by 40% |
+| `EFFECT_CURVE` | 0.5 | A partial award's effect is (award ÷ request) ^ 0.5: diminishing returns |
+| `NEED_WEIGHT` | 0.5 | Tract poverty above the corridor average raises value (multiplier capped at 0.75–1.5×) |
+| `STEP_FRACTION` | 0.25 | Awards are made in 25% slices of each request |
+| `MIN_AWARD` | 2000 | Smallest grant worth administering |
+
+`MAX_RISK_REDUCTION` scales every grant equally. It changes *how many* closures are avoided, not
+*who* is funded.
+
+## Run it locally
+
+From the repo root, with a virtual environment that has `grant_agent/requirements.txt`
+installed (see the [project README](../README.md#quick-start)). Create `agent/grant_agent/.env`;
+it's gitignored:
+
+```bash
+GOOGLE_GENAI_USE_ENTERPRISE=1          # Gemini through Vertex AI (the guide's GOOGLE_GENAI_USE_VERTEXAI=TRUE also works)
+GOOGLE_CLOUD_PROJECT=qwiklabs-gcp-04-524776bdd295
+GOOGLE_CLOUD_LOCATION=us-central1      # Gemini isn't available to this project in us-west2
+GEMINI_MODEL=gemini-2.5-flash
+TOOLBOX_URL=https://toolbox-173086820802.us-west2.run.app   # optional
+```
+
+```bash
+gcloud auth application-default login
+cd agent
+adk web            # dev UI; pick grant_agent
+adk api_server     # or the HTTP API the grant desk uses
+```
+
+Questions to try are in [BUILD_GUIDE.md, step 11](BUILD_GUIDE.md#11-test-against-the-officers-afternoon).
+For example: "We have $50,000. Who should we fund?", "Why isn't the biggest supplier funded?",
+"What does $8,000 actually change?", and the failure cases (leaf applicant, unknown name, tiny
+budget).
+
+## Tests
+
+```bash
+cd agent && python -m pytest tests -q
+```
+
+The tests need no credentials. `tools.py` creates its BigQuery client on first use, and the
+realistic test replaces `_rows`.
+
+| Test | Checks |
+|---|---|
+| `test_robust_hub_is_not_funded_first` | A healthy hub with wide reach is not funded ahead of a distressed, unique supplier |
+| `test_leaf_still_fundable_and_budget_respected` | A leaf with no downstream businesses can still be funded, and the budget is never exceeded |
+| `test_realistic_weak_hub_is_not_funded_first` | Feeds the shape of Tradespace's 194 real paths through `_cascades`: one link at 0.021, every other path starting with a 0.015 link. It fails without the 0.02 cutoff and passes with it |
+
+## Deploy
+
+`adk deploy cloud_run`, then restore the runtime settings. The exact commands are in
+[docs/ARCHITECTURE.md, Deploying](../docs/ARCHITECTURE.md#deploying). After changing the tools,
+also redeploy the grant desk, because its container bundles this package.
+
+## `grant_tools/`: the reference cascade query
+
+The data lane's tested version of the traversal, kept for comparison:
+
+- [`cascade.sql`](grant_tools/cascade.sql) uses `GRAPH_TABLE` and `MATCH` over `{1,3}` hops.
+  It reads routes with `NODES(p)` instead of parsing `TO_JSON(p)`, and computes path strength
+  and the weakest link in SQL. It keeps the strongest path per exposed business, with
+  `@min_link` (default 0.02) as the stopping rule.
+- [`cascade.py`](grant_tools/cascade.py) wraps it: `trace_cascade`, `trace_many`,
+  `compare_cascades` (with a 10% tie margin) and `grant_reasons`, which writes memo-ready
+  reason lines. It also drops duplicate registrations (same name and address).
+
+The production tool `tools._cascades` adopted the same 0.02 weakest-link rule. Run the
+reference from `agent/` with `python -m grant_tools.cascade 114`.

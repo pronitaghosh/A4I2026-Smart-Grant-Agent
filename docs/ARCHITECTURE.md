@@ -3,7 +3,10 @@
 How the system is built and deployed, as of 2026-11-17, in Google Cloud project
 `qwiklabs-gcp-04-524776bdd295`. For what each table holds and how it was validated, see
 [TEAM_NOTES.md](TEAM_NOTES.md) and [`sql/README.md`](../sql/README.md). For the product
-requirements, goals and decisions, see [PRD.pdf](PRD.pdf).
+requirements, goals and decisions, see [PRD.pdf](PRD.pdf), and for what is built against each
+requirement, [REQUIREMENTS.md](REQUIREMENTS.md). Component details:
+[`agent/README.md`](../agent/README.md) (tools, allocator, tests) and
+[`frontend/README.md`](../frontend/README.md) (the grant desk).
 
 ## At a glance
 
@@ -83,9 +86,9 @@ Behaviors worth knowing:
 |---|---|
 | `agent.py` | Defines `root_agent` (Gemini model from `GEMINI_MODEL`) with three Python tools, plus the Toolbox tools when `TOOLBOX_URL` is set |
 | `prompt.py` | System instruction: who the officer is, which tool answers which question, the answer format, and the rules (every number from a tool, say what's modeled, refuse when the data can't separate two applicants, no race or ethnicity) |
-| `tools.py` | `get_cascade(business_id, depth=2)`: multi-hop GQL over `LocalEconomy`, following `Supplies` forward, strongest path per exposed business. `recommend_grants(budget)`: loads applications, tract need, industry alternatives and SBA charge-offs, traces every cascade in one query, then calls the allocator. `exposed_non_applicants()`: businesses downstream of applicants that never applied |
+| `tools.py` | `get_cascade(business_id, depth=2)`: multi-hop GQL over `LocalEconomy`, following `Supplies` forward, skipping any path with a link below 0.02, strongest path per exposed business. `recommend_grants(budget)`: loads applications, tract need, industry alternatives and SBA charge-offs, traces every cascade in one query, then calls the allocator. `exposed_non_applicants()`: businesses downstream of applicants that never applied |
 | `allocator.py` | Pure Python, no BigQuery. Value of a grant = drop in the applicant's closure risk × (1 + contagion × uniqueness × downstream exposure) × neighborhood need. Allocates in slices to maximize expected closures avoided, and reruns under 5 alternative assumptions to show which awards are stable. All assumptions are in one `ASSUMPTIONS` dict |
-| `tests/test_allocator.py` | Unit tests for the allocator (`cd agent && python -m pytest tests`) |
+| `tests/test_allocator.py` | Three unit tests, no credentials needed (`cd agent && python -m pytest tests`). One feeds the shape of Tradespace's real paths through `_cascades`, to guard the weakest-link rule |
 
 The traversal at the heart of it, in `tools.py`:
 
@@ -96,8 +99,14 @@ WHERE seed.business_id IN (...) AND x.business_id != seed.business_id
 RETURN seed.business_id AS seed_id, TO_JSON(p) AS path_json
 ```
 
-`agent/grant_tools/` holds a second, tested version of this query that returns paths with
-`NODES(p)` and applies a weakest-link cutoff. It's a reference, not called in production.
+Each returned path is parsed into nodes and link intensities. **Weakest-link rule:** any path
+containing a link below 0.02 (2 cents per input dollar) is dropped. This keeps a generic
+supplier, like Tradespace's data hosting at about 0.015 per link, from looking like a hub. For
+each exposed business, only the strongest remaining path is kept. Depth is clamped to 1 to 3,
+and IDs are checked against `^[A-Za-z0-9._-]{1,64}$` before they go into the query.
+
+`agent/grant_tools/` holds a second, tested version of this query. It returns paths with
+`NODES(p)` and applies the same cutoff in SQL. It's a reference, not called in production.
 
 ## The MCP Toolbox (`agent/toolbox/tools.yaml`)
 
@@ -180,12 +189,48 @@ secret and redeploy the `toolbox` service (build guide, step 9).
 
 **Data.** Run the files in `sql/` in order; each replaces what it creates.
 
+## Configuration
+
+| Service | Variable | Value in the deployment | Purpose |
+|---|---|---|---|
+| grant-agent | `GOOGLE_GENAI_USE_ENTERPRISE` | `1` | Gemini through Vertex AI (ADK's name for it; the older `GOOGLE_GENAI_USE_VERTEXAI=TRUE` also works) |
+| grant-agent | `GOOGLE_CLOUD_PROJECT` | `qwiklabs-gcp-04-524776bdd295` | Project for Vertex AI and BigQuery |
+| grant-agent | `GOOGLE_CLOUD_LOCATION` | `us-central1` | Gemini region. Must not be us-west2 |
+| grant-agent | `GEMINI_MODEL` | `gemini-2.5-flash` | The model behind `root_agent` |
+| grant-agent | `TOOLBOX_URL` | `https://toolbox-173086820802.us-west2.run.app` | Adds the MCP Toolbox tools. Without it, the agent runs on its Python tools only |
+| grant-desk | `AGENT_URL` | `https://grant-agent-173086820802.us-west2.run.app` | Where "Ask the agent" goes. Without it, `/api/ask` returns 503 |
+| grant-desk | `AGENT_APP` | `grant_agent` | ADK app name |
+| grant-desk | `GOOGLE_CLOUD_PROJECT` | unset (the code's default is the lab project) | Project for BigQuery |
+| toolbox | config file | `tools` secret in Secret Manager, mounted at `/app/tools.yaml` | Source: [`agent/toolbox/tools.yaml`](../agent/toolbox/tools.yaml) |
+
+Each service also answers on Cloud Run's older URL form (`https://<service>-2t7btqn2ya-wl.a.run.app`).
+The table uses the project-number form.
+
+## Security and access
+
+- **Read-only data access.** The Toolbox can only run the four parameterized `SELECT`s in
+  `tools.yaml`. The Python tools build their SQL from IDs checked against
+  `^[A-Za-z0-9._-]{1,64}$`, and from the clamped depth.
+- **Model output is sanitized.** The desk renders the agent's Markdown through DOMPurify.
+- **Open endpoints.** The desk calls the agent, and the agent calls the Toolbox, without identity
+  tokens, so all three services accept unauthenticated requests. That's acceptable for a demo over
+  public data with read-only queries. For real use, require IAM invocation and send ID tokens.
+- **Service accounts.** The Toolbox runs as `toolbox-sa`, which has only BigQuery Job User, Data
+  Viewer and Secret Accessor. The desk and the agent run as the default compute service account,
+  which is broader than the PRD's least-privilege target.
+- **No personal data.** The business registry arrives already filtered, with sole proprietors and
+  home addresses removed. Race and ethnicity are not used anywhere in the reasoning.
+
 ## Known issues
 
 | Issue | Effect | Status |
 |---|---|---|
-| The allocator funds Tradespace, a healthy hub with 113 weak generic links, first and in full | Contradicts "don't fund the robust hub"; judges ask about this | Open. Fix and evidence in [TEAM_NOTES.md](TEAM_NOTES.md#qa-findings-for-the-agent-lane) |
+| The allocator funded Tradespace, a healthy hub with 113 weak generic links, first and in full | Contradicted "don't fund the robust hub" | **Fixed.** The weakest-link rule (PR #12) leaves Tradespace one dependent business, and it isn't funded. The applicant swap (PR #13) put three real cascades in the queue. Sour Flour is now grant 1 |
 | A redeploy of the agent may reset its Gemini location to us-west2 | Every question fails with a 500 | Re-run the settings command above after each agent deploy |
 | Two Toolbox services | Confusion about which one is live | The agent uses us-west2; the us-central1 copy is idle |
 | First load after a desk deploy takes about 9 seconds | A slow first impression | Open the desk once before recording |
 | Each question starts a new agent session | Follow-ups don't remember earlier questions | Acceptable for the demo |
+| In sample mode the desk ignores the `budget` parameter | The sample always shows the $50,000 run | Only matters when running `frontend/` without the agent package |
+| The traversal returns at most 50,000 paths, and truncates silently | Cascades would be undercounted if the limit were hit | Not reached here: every 1-to-3-hop `Supplies` path in the corridor totals 26,124 |
+| The desk and the agent use the default compute service account | Broader access than needed | Open. See Security and access |
+| No run log of inputs, queries and outputs (a PRD auditability target) | A recommendation can't be replayed later from a log | Open. The allocation is deterministic, so rerunning on the same tables reproduces it |

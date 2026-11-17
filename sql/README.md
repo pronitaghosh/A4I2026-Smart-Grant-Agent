@@ -27,7 +27,7 @@ businesses, was split into 0176.02 to 0176.04). ACS 2019 5-year uses the 2010 nu
 covers all 6 corridor tracts. Formulas match the notebook's Section 10.
 
 Result, checked 2026-11-17: 230 of 230 businesses have demographics; corridor average poverty
-21.5% (the README says 22%). Say "2019 five-year estimates" when you quote these numbers.
+21.5% (the [challenge brief](../docs/CHALLENGE.md) says 22%). Say "2019 five-year estimates" when you quote these numbers.
 
 ## Checks worth rerunning
 

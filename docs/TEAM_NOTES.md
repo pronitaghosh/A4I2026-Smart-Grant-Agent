@@ -11,8 +11,10 @@ From the architect / data lane (Sankar), 2026-11-17. Track: **Main Street relief
   the pieces fit, with diagrams: [ARCHITECTURE.md](ARCHITECTURE.md).
 - **BigQuery is ready.** The property graph `a4i_econ.LocalEconomy` and the tables `applications`
   and `business_tract` exist in the lab project.
-- **Still open, and the judges will notice:** on the real data the allocator funds the "robust hub"
-  (Tradespace) first, in full. See the QA findings below.
+- **The robust-hub finding is fixed.** The weakest-link rule (PR #12) and an applicant queue with
+  real cascades (PR #13) mean Tradespace is no longer funded, and Sour Flour (97 businesses
+  downstream) is grant 1. See the QA findings below, and the
+  [hub check](../README.md#hub-check-the-same-50000-three-ways) for the side-by-side numbers.
 
 ## What's in BigQuery
 
@@ -27,14 +29,14 @@ Project `qwiklabs-gcp-04-524776bdd295`, dataset `a4i_econ` (US multi-region).
 | `borrowed_from` | 4 | SBA 7(a) loans, including charge-offs | Real, but only 4 in this corridor |
 | `tract_demographics` | 7 | The organizers' tract table | Real, but covers the wrong tracts (see below) |
 | **`LocalEconomy`** | graph | Nodes `Business`, `Employer`; edges `Supplies`, `DrawsFootfall` | Built by us, names match the build guide |
-| **`applications`** | 11 | The officer's queue, $127,000 requested | Businesses real; every financial field illustrative |
+| **`applications`** | 11 | The officer's queue, $118,000 requested; applicants chosen on purpose (see `sql/02_applications.sql`) | Businesses real; every financial field illustrative |
 | **`business_tract`** | 230 | Each business's census tract, poverty, car access, assistance, income | Real, ACS 2019 five-year |
 
 The bold rows are ours. To rebuild any of them, run the files in [`sql/`](../sql/) in order; each
 replaces what it creates. [`sql/README.md`](../sql/README.md) has the commands and checks.
 
 **Checked on the loaded data:** keys are unique (no silently multiplied paths); 86 businesses
-reach someone two hops down, matching the README; every business has census data; corridor
+reach someone two hops down, matching the challenge brief; every business has census data; corridor
 average poverty is 21.5%.
 
 **Graph queries work without our own reservation.** Creating one failed on a Qwiklabs-wide quota
@@ -103,6 +105,15 @@ us-west2, minimum 1 instance), serving live numbers. To redeploy it, see
 
 ## QA findings for the agent lane
 
+**Status: resolved.** Both suggested fixes below are in:
+
+- The 0.02 weakest-link rule is in `tools._cascades`, with a regression test (PR #12).
+- The applicant queue now includes Sour Flour, The Warfield Theater and Non Plus Ultra (PR #13).
+
+Live result at $50,000: Sour Flour is grant 1 ($5,000, 97 businesses downstream), and
+Tradespace is not funded. 9 grants, $49,500 allocated, and expected closures avoided rose from
+1.19 to 4.14. The original findings follow, for the record.
+
 From running the build guide's allocator, unchanged, on the real tables (depth 2, $50,000):
 
 1. **The robust hub is funded first.** Tradespace (data hosting, 9% closure risk) gets its full
@@ -117,7 +128,7 @@ From running the build guide's allocator, unchanged, on the real tables (depth 2
    a parking operator, whose links are all weak.
 3. **The money is spread thin:** 10 of 11 applicants funded, most at 25 to 27% of what they asked.
 
-Suggested fix, for the team to decide:
+Suggested fix (both parts done; see the status above):
 
 - Add the 0.02 weakest-link rule to `_cascades` in `tools.py`. A tested version is in
   [`agent/grant_tools/cascade.sql`](../agent/grant_tools/cascade.sql).
@@ -137,23 +148,45 @@ reads paths with `NODES(p)` and `UNNEST(d)` instead, and that works on this data
 | `data` | `sql/` (graph and tables), `agent/grant_tools/` (tested cascade query), `docs/` |
 | `frontend` | `frontend/` (the grant desk, its Dockerfile and sample data) |
 | `agent` | the agent lane's work |
+| `hub-fix`, `applicant-swap` | The QA fixes above (PRs #12 and #13) |
+| `docs` | The project README, component READMEs, requirements status and `scripts/hub_check.py` |
 
-Everything is merged into `main` except the newest change on each branch; check the open PRs.
+Merge into `main` through pull requests; check the open PRs for what isn't in yet.
 
 ## Equity audit (for the deck)
 
-From the live allocation ($50,000, 10 grants), against all 230 corridor businesses:
+From the live allocation ($50,000, 9 grants, $49,500), against all 230 corridor businesses.
+Updated after the applicant swap; the earlier figures described a different queue.
 
-- **The money reaches poorer tracts.** Dollar-weighted tract poverty of the grants is 23.9%,
-  against a corridor average of 21.5%; all 10 grants are in tracts above that average.
-- **The industry bias the README predicted shows up.** Food and lodging gets 39% of the money but is
-  28% of businesses; tech and professional services get 35% against 25%. Personal services get 6%
-  against 12%, and health and social services get nothing (none applied).
+- **The money reaches poorer tracts.** Dollar-weighted tract poverty of the grants is 24.8%,
+  against a corridor average of 21.5%. 8 of the 9 grants are in tracts above that average; Sour
+  Flour (18.3%) is the exception. Dollar-weighted share of households without a car is 80.7%,
+  against 73.8%.
+- **The industry bias the brief predicted shows up, and the queue adds to it.**
+
+  | Industry group (NAICS) | Share of grant dollars | Share of corridor businesses |
+  |---|---:|---:|
+  | Food and lodging (72) | 51.5% | 28.3% |
+  | Manufacturing, including Sour Flour's bakery (31–33) | 18.2% | 6.5% |
+  | Retail (44–45) | 18.2% | 12.6% |
+  | Arts and recreation (71) | 12.1% | 4.8% |
+  | Tech and professional services (51, 54) | 0% | 24.8% |
+  | Personal and other services (81) | 0% | 12.2% |
+  | Health and social services (62) | 0% | 10.9% |
+
+  Input-heavy industries get more modeled supply links, which is the bias the brief warns about.
+  We also chose applicants *with* real cascades, and those are mostly food businesses. Tech has
+  one applicant, Tradespace, unfunded on purpose. Personal and health services had no
+  applicants. Say both causes in the deck.
 
 ## Still open
 
-- Fix the robust-hub finding and decide the applicant swap above.
 - After any agent redeploy, restore its Gemini location (see [ARCHITECTURE.md](ARCHITECTURE.md#deploying)).
 - Run the build guide's test table, the seven officer questions and the failure cases, against
   the deployed agent (QA).
+- Not built yet, from the PRD:
+  - an automated check that every memo has all seven elements and no uncited numbers (FR-7, FR-8)
+  - memo export to PDF or Docs (FR-16)
+  - a per-run audit log
+  - [REQUIREMENTS.md](REQUIREMENTS.md) has the full list
 - Deck (6 slides) and pitch video (under 3 minutes).
