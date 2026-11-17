@@ -97,7 +97,10 @@ If you change these tools, keep these fields or tell us:
   `local_alternatives_same_industry`, `is_leaf`, and `paths[]` with `path` ("A → B → C"),
   `hops`, `weight`, `link_intensities`.
 
-**Not done yet:** deploying the desk to Cloud Run.
+**Live:** https://grant-desk-173086820802.us-west2.run.app (Cloud Run service `grant-desk`,
+us-west2, minimum 1 instance). It shows the sample until the agent's tools are written. To serve
+live numbers, the next deploy has to include `agent/grant_agent/` in the container, and the service
+account needs BigQuery read access.
 
 ## QA findings for the agent lane
 
@@ -141,6 +144,6 @@ Merge into `main` at each gate.
 ## Still open
 
 - Decide the applicant swap above.
-- Deploy the agent (agent lane), then set `AGENT_URL` and deploy the grant desk.
+- Deploy the agent (agent lane), then redeploy the grant desk with the agent's tools and `AGENT_URL`.
 - Run the build guide's test table, the seven officer questions and the failure cases, against
   the deployed agent (QA).
