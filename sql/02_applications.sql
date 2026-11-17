@@ -1,35 +1,23 @@
--- Copied verbatim from agent/BUILD_GUIDE.md (step 3a) so the agent lane's tools find what they expect.
+-- a4i_econ.applications: the officer's queue of 11 applications.
+--
+-- The businesses are real. Every financial field is illustrative, derived deterministically from
+-- business_id with the formulas from agent/BUILD_GUIDE.md step 3a, and flagged illustrative = TRUE.
+--
+-- Applicants are chosen on purpose, not at random. The guide's random "deep" picks landed on tech
+-- and parking firms whose supply links are all weak: with every link required to be >= 0.02, they
+-- had 0 to 2 businesses downstream, so the graph never changed a decision. This queue has:
+--   hub      171 Tradespace            113 buyers, all weak links; financially robust (8% drop, 9 months cash)
+--   deep     16  Sour Flour            97 strongly dependent businesses, 96 of them two hops out
+--            114 The Warfield Theater  7 (2 at two hops)
+--            66  Non Plus Ultra        6 (2 at two hops)
+--   one_hop  135 Honeybee Foods, 85 Supremo Pizza, 106 Blue Bottle Coffee
+--   leaf     211 SF Proper Hotel - Villon, 185 Soliome, 73 Eddy St Bodega, 92 Oak Tree Hotel
 CREATE OR REPLACE TABLE a4i_econ.applications AS
-WITH direct AS (
-  SELECT supplier_id AS business_id, COUNT(DISTINCT buyer_id) AS direct_buyers
-  FROM a4i_econ.supplies GROUP BY 1
-),
-two_hop AS (
-  SELECT a.supplier_id AS business_id, COUNT(DISTINCT b.buyer_id) AS hop2
-  FROM a4i_econ.supplies a
-  JOIN a4i_econ.supplies b ON b.supplier_id = a.buyer_id
-  WHERE b.buyer_id != a.supplier_id
-  GROUP BY 1
-),
-tagged AS (
-  SELECT bz.business_id,
-         IFNULL(d.direct_buyers, 0) AS direct_buyers,
-         IFNULL(t.hop2, 0)          AS hop2,
-         RANK() OVER (ORDER BY IFNULL(d.direct_buyers, 0) DESC) AS reach_rank
-  FROM a4i_econ.businesses bz
-  LEFT JOIN direct d USING (business_id)
-  LEFT JOIN two_hop t USING (business_id)
-),
-bucketed AS (
-  SELECT *, CASE WHEN reach_rank = 1 THEN 'hub'
-                 WHEN hop2 > 0       THEN 'deep'
-                 WHEN direct_buyers > 0 THEN 'one_hop'
-                 ELSE 'leaf' END AS bucket
-  FROM tagged
-),
-picked AS (
-  SELECT *, ROW_NUMBER() OVER (PARTITION BY bucket ORDER BY FARM_FINGERPRINT(business_id)) AS rn
-  FROM bucketed
+WITH picked AS (
+  SELECT business_id, 'hub' AS bucket FROM UNNEST(['171']) AS business_id
+  UNION ALL SELECT business_id, 'deep'    FROM UNNEST(['16', '114', '66']) AS business_id
+  UNION ALL SELECT business_id, 'one_hop' FROM UNNEST(['135', '85', '106']) AS business_id
+  UNION ALL SELECT business_id, 'leaf'    FROM UNNEST(['211', '185', '73', '92']) AS business_id
 )
 SELECT
   CONCAT('APP-', LPAD(CAST(ROW_NUMBER() OVER (ORDER BY FARM_FINGERPRINT(business_id)) AS STRING), 3, '0')) AS application_id,
@@ -46,8 +34,4 @@ SELECT
     ELSE 'Lost a major customer; payroll at risk next month.'
   END AS hardship_note,
   TRUE AS illustrative   -- every financial field above is invented for the demo
-FROM picked
-WHERE (bucket = 'hub' AND rn <= 1)
-   OR (bucket = 'deep' AND rn <= 4)
-   OR (bucket = 'one_hop' AND rn <= 2)
-   OR (bucket = 'leaf' AND rn <= 4);
+FROM picked;
