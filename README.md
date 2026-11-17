@@ -134,7 +134,7 @@ flowchart LR
     agent -- "plans, writes prose" --> gemini[("Gemini 3.8 Flash<br/>Vertex AI · global")]
     agent --> tools["<b>Our tools</b><br/>get_cascade · recommend_grants<br/>exposed_non_applicants · audit_allocation"]
     agent -- MCP --> toolbox["<b>MCP Toolbox</b><br/>4 parameterized SQL tools<br/>private, ID-token auth"]
-    tools -- "multi-hop GQL MATCH" --> graph[["BigQuery property graph<br/>a4i_econ.LocalEconomy"]]
+    tools -- "multi-hop GQL MATCH" --> pgraph[["BigQuery property graph<br/>a4i_econ.LocalEconomy"]]
     tools --> alloc["<b>allocator.py</b><br/>risk × cascade × need<br/>→ awards"]
     toolbox --> bq[("BigQuery tables<br/>a4i_econ")]
 ```
