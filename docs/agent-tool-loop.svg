@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1048 562" width="1048" height="562" role="img" aria-label="Sequence: the grant desk posts the question to the ADK runner. ADK sends Gemini the question, instructions and eight tool schemas. Gemini replies with a tool call; ADK runs the tool in-process or over MCP and returns the result to Gemini. This repeats until Gemini returns the final Markdown answer, which ADK sends back to the desk as events.">
+<title>How the ADK agent chains tools</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=Overpass:wght@600;700;800&amp;family=Public+Sans:wght@400;500;600&amp;display=swap');
+.bg { fill: #ffffff; }
+.box { fill: #ffffff; stroke: #c6d1c3; stroke-width: 1.2; }
+.frame { fill: none; stroke: #56645a; stroke-width: 1.2; stroke-dasharray: 6 5; }
+.hl { fill: #e7ecfb; stroke: #2347c5; stroke-width: 1.8; }
+.chip { fill: #eef2ea; stroke: #c6d1c3; stroke-width: 1; }
+.t-title { font: 700 15px 'Overpass', 'Helvetica Neue', Arial, sans-serif; fill: #17211a; }
+.t-frame { font: 700 11px 'Overpass', 'Helvetica Neue', Arial, sans-serif; letter-spacing: 0.08em; fill: #56645a; }
+.t-sub { font: 400 12px 'Public Sans', 'Helvetica Neue', Arial, sans-serif; fill: #56645a; }
+.t-strong { font: 600 12px 'Public Sans', 'Helvetica Neue', Arial, sans-serif; fill: #17211a; }
+.t-mono { font: 500 12px 'IBM Plex Mono', Menlo, Consolas, monospace; fill: #17211a; }
+.t-label { font: 600 11px 'Public Sans', 'Helvetica Neue', Arial, sans-serif; fill: #56645a; }
+.t-accent { fill: #2347c5; }
+.t-amber { fill: #a86d12; }
+.edge { fill: none; stroke: #17211a; stroke-width: 1.5; }
+.edge.accent { stroke: #2347c5; stroke-width: 3; }
+.head { fill: #17211a; }
+.head.accent { fill: #2347c5; }
+.node { fill: #ffffff; stroke: #2347c5; stroke-width: 2; }
+.node.emp { stroke: #56645a; }
+.mini { fill: none; stroke: #2347c5; stroke-width: 1.6; }
+.mini.foot { stroke: #56645a; stroke-dasharray: 4 3; }
+.seq text { paint-order: stroke; stroke: #ffffff; stroke-width: 6px; stroke-linejoin: round; }
+.seq text.t-title, .seq text[y="60"] { stroke: none; }
+.h1 { font: 800 22px 'Overpass', 'Helvetica Neue', Arial, sans-serif; fill: #17211a; }
+.cap { font: 400 13px 'Public Sans', 'Helvetica Neue', Arial, sans-serif; fill: #56645a; }
+</style>
+<rect class="bg" x="0" y="0" width="1048" height="562"/>
+<text class="h1" x="24" y="38">How the ADK agent chains tools</text>
+<text class="cap" x="24" y="60">A single agent: Gemini chooses each tool call, ADK runs it (Python in-process, or MCP with an ID token) and returns the result.</text>
+<g transform="translate(24,76)"><g class="seq">
+          <defs>
+            <marker id="arr3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="head" d="M0,0 L10,5 L0,10 z"/></marker>
+            <marker id="arr3-hl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path class="head accent" d="M0,0 L10,5 L0,10 z"/></marker>
+          </defs>
+          <!-- participants -->
+          <rect class="box" x="30" y="20" width="160" height="50" rx="8"/>
+          <text class="t-title" x="110" y="42" text-anchor="middle">grant-desk</text>
+          <text class="t-sub" x="110" y="60" text-anchor="middle">Ask the agent</text>
+          <rect class="hl" x="290" y="20" width="180" height="50" rx="8"/>
+          <text class="t-title" x="380" y="42" text-anchor="middle">ADK runner</text>
+          <text class="t-sub" x="380" y="60" text-anchor="middle">grant-agent</text>
+          <rect class="box" x="560" y="20" width="180" height="50" rx="8"/>
+          <text class="t-title" x="650" y="42" text-anchor="middle">Gemini 3.8 Flash</text>
+          <text class="t-sub" x="650" y="60" text-anchor="middle">decides the next step</text>
+          <rect class="box" x="800" y="20" width="180" height="50" rx="8"/>
+          <text class="t-title" x="890" y="42" text-anchor="middle">Tools</text>
+          <text class="t-sub" x="890" y="60" text-anchor="middle">4 Python · 4 MCP</text>
+          <line class="frame" x1="110" y1="70" x2="110" y2="455"/>
+          <line class="frame" x1="380" y1="70" x2="380" y2="455"/>
+          <line class="frame" x1="650" y1="70" x2="650" y2="455"/>
+          <line class="frame" x1="890" y1="70" x2="890" y2="455"/>
+
+          <!-- 1 -->
+          <text class="t-label" x="245" y="102" text-anchor="middle">1  POST /run · new session</text>
+          <path class="edge" d="M110,110 H377" marker-end="url(#arr3)"/>
+          <!-- 2 -->
+          <text class="t-label" x="515" y="142" text-anchor="middle">2  question, instructions, 8 tool schemas</text>
+          <path class="edge" d="M380,150 H647" marker-end="url(#arr3)"/>
+
+          <!-- loop -->
+          <rect class="frame" x="300" y="170" width="680" height="190" rx="8"/>
+          <text class="t-frame" x="392" y="190">LOOP · UNTIL GEMINI HAS WHAT IT NEEDS</text>
+          <!-- 3 -->
+          <text class="t-mono t-accent" x="515" y="214" text-anchor="middle">3  recommend_grants(50000)</text>
+          <path class="edge accent" d="M650,222 H383" marker-end="url(#arr3-hl)"/>
+          <!-- 4 -->
+          <text class="t-label" x="635" y="256" text-anchor="middle">4  run it: Python in-process, or MCP with an ID token</text>
+          <path class="edge" d="M380,264 H887" marker-end="url(#arr3)"/>
+          <!-- 5 -->
+          <text class="t-label" x="635" y="292" text-anchor="middle">5  result: awards, reasons, runner-up</text>
+          <path class="edge" d="M890,300 H383" marker-end="url(#arr3)"/>
+          <!-- 6 -->
+          <text class="t-label" x="515" y="330" text-anchor="middle">6  function response</text>
+          <path class="edge" d="M380,338 H647" marker-end="url(#arr3)"/>
+          <text class="t-sub" x="870" y="352" text-anchor="end">next: get_cascade ×2 · audit_allocation · MCP lookups</text>
+
+          <!-- 7 -->
+          <text class="t-label" x="515" y="392" text-anchor="middle">7  final answer, figures from tools</text>
+          <path class="edge" d="M650,400 H383" marker-end="url(#arr3)"/>
+          <!-- 8 -->
+          <text class="t-label" x="245" y="432" text-anchor="middle">8  events → final text</text>
+          <path class="edge" d="M380,440 H113" marker-end="url(#arr3)"/>
+        </g></g>
+
+</svg>

@@ -1,0 +1,148 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1228 714" width="1228" height="714" role="img" aria-label="The officer's browser talks to the grant desk on Cloud Run. The desk calls the agent's Python tools in-process against BigQuery and forwards questions to the ADK agent. The agent asks Gemini 3.8 Flash on Vertex AI which tools to call, runs a multi-hop graph traversal and SQL against BigQuery, and reaches the private MCP Toolbox over MCP with an ID token.">
+<title>Smart Grant Agent: architecture</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=Overpass:wght@600;700;800&amp;family=Public+Sans:wght@400;500;600&amp;display=swap');
+.bg { fill: #ffffff; }
+.box { fill: #ffffff; stroke: #c6d1c3; stroke-width: 1.2; }
+.frame { fill: none; stroke: #56645a; stroke-width: 1.2; stroke-dasharray: 6 5; }
+.hl { fill: #e7ecfb; stroke: #2347c5; stroke-width: 1.8; }
+.chip { fill: #eef2ea; stroke: #c6d1c3; stroke-width: 1; }
+.t-title { font: 700 15px 'Overpass', 'Helvetica Neue', Arial, sans-serif; fill: #17211a; }
+.t-frame { font: 700 11px 'Overpass', 'Helvetica Neue', Arial, sans-serif; letter-spacing: 0.08em; fill: #56645a; }
+.t-sub { font: 400 12px 'Public Sans', 'Helvetica Neue', Arial, sans-serif; fill: #56645a; }
+.t-strong { font: 600 12px 'Public Sans', 'Helvetica Neue', Arial, sans-serif; fill: #17211a; }
+.t-mono { font: 500 12px 'IBM Plex Mono', Menlo, Consolas, monospace; fill: #17211a; }
+.t-label { font: 600 11px 'Public Sans', 'Helvetica Neue', Arial, sans-serif; fill: #56645a; }
+.t-accent { fill: #2347c5; }
+.t-amber { fill: #a86d12; }
+.edge { fill: none; stroke: #17211a; stroke-width: 1.5; }
+.edge.accent { stroke: #2347c5; stroke-width: 3; }
+.head { fill: #17211a; }
+.head.accent { fill: #2347c5; }
+.node { fill: #ffffff; stroke: #2347c5; stroke-width: 2; }
+.node.emp { stroke: #56645a; }
+.mini { fill: none; stroke: #2347c5; stroke-width: 1.6; }
+.mini.foot { stroke: #56645a; stroke-dasharray: 4 3; }
+.seq text { paint-order: stroke; stroke: #ffffff; stroke-width: 6px; stroke-linejoin: round; }
+.seq text.t-title, .seq text[y="60"] { stroke: none; }
+.h1 { font: 800 22px 'Overpass', 'Helvetica Neue', Arial, sans-serif; fill: #17211a; }
+.cap { font: 400 13px 'Public Sans', 'Helvetica Neue', Arial, sans-serif; fill: #56645a; }
+</style>
+<rect class="bg" x="0" y="0" width="1228" height="714"/>
+<text class="h1" x="24" y="38">Smart Grant Agent: architecture</text>
+<text class="cap" x="24" y="60">One ADK agent on Cloud Run chains four Python tools and four MCP Toolbox tools; every number comes from BigQuery.</text>
+<g transform="translate(24,76)"><g>
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="head" d="M0,0 L10,5 L0,10 z"/></marker>
+          <marker id="arr-hl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path class="head accent" d="M0,0 L10,5 L0,10 z"/></marker>
+        </defs>
+
+        <!-- Officer -->
+        <rect class="box" x="20" y="95" width="140" height="60" rx="8"/>
+        <text class="t-title" x="90" y="121" text-anchor="middle">Grant officer</text>
+        <text class="t-sub" x="90" y="140" text-anchor="middle">web browser</text>
+        <path class="edge" d="M160,125 H218" marker-end="url(#arr)"/>
+
+        <!-- Cloud Run -->
+        <rect class="frame" x="190" y="30" width="582" height="530" rx="12"/>
+        <text class="t-frame" x="206" y="52">CLOUD RUN · US-WEST2 · ONE WARM INSTANCE EACH</text>
+
+        <!-- grant-desk -->
+        <rect class="box" x="220" y="70" width="540" height="115" rx="8"/>
+        <text class="t-title" x="238" y="96">grant-desk</text>
+        <text class="t-sub" x="238" y="115">FastAPI backend + web UI · frontend/</text>
+        <text class="t-mono" x="238" y="142">/api/recommendation   /api/cascade/{id}   /api/audit   /api/ask</text>
+        <text class="t-sub" x="238" y="166">Bundles agent/grant_agent, so the queue on screen and the agent share one codebase.</text>
+
+        <path class="edge" d="M300,185 V238" marker-end="url(#arr)"/>
+        <text class="t-label" x="310" y="216">Ask the agent: POST /run</text>
+
+        <!-- grant-agent -->
+        <rect class="box" x="220" y="240" width="345" height="300" rx="8"/>
+        <text class="t-title" x="238" y="266">grant-agent</text>
+        <text class="t-sub" x="238" y="285">one ADK agent · root_agent · prompt.py</text>
+
+        <rect class="chip" x="238" y="298" width="309" height="30" rx="6"/>
+        <text class="t-mono" x="250" y="318">get_cascade</text>
+        <text class="t-label" x="537" y="318" text-anchor="end">paths for one business</text>
+        <rect class="chip" x="238" y="336" width="309" height="30" rx="6"/>
+        <text class="t-mono" x="250" y="356">recommend_grants</text>
+        <text class="t-label" x="537" y="356" text-anchor="end">$ awards, cached</text>
+        <rect class="chip" x="238" y="374" width="309" height="30" rx="6"/>
+        <text class="t-mono" x="250" y="394">exposed_non_applicants</text>
+        <text class="t-label" x="537" y="394" text-anchor="end">never applied</text>
+        <rect class="chip" x="238" y="412" width="309" height="30" rx="6"/>
+        <text class="t-mono" x="250" y="432">audit_allocation</text>
+        <text class="t-label" x="537" y="432" text-anchor="end">equity audit</text>
+
+        <text class="t-strong" x="238" y="470">allocator.py · audit.py</text>
+        <text class="t-sub" x="238" y="489">Pure Python, no BigQuery, unit-tested.</text>
+        <text class="t-sub" x="238" y="514">Every number in an answer comes from a tool.</text>
+
+        <!-- toolbox -->
+        <rect class="box" x="600" y="240" width="160" height="150" rx="8"/>
+        <text class="t-title" x="616" y="266">toolbox</text>
+        <text class="t-sub" x="616" y="284">private, ID token</text>
+        <text class="t-mono" x="616" y="310">find_business</text>
+        <text class="t-mono" x="616" y="330">list_applications</text>
+        <text class="t-mono" x="616" y="350">loan_history</text>
+        <text class="t-mono" x="616" y="370">tract_profile</text>
+        <path class="edge" d="M565,300 H598" marker-end="url(#arr)"/>
+        <text class="t-label" x="582" y="292" text-anchor="middle">MCP</text>
+
+        <!-- BigQuery -->
+        <rect class="box" x="840" y="30" width="320" height="405" rx="10"/>
+        <text class="t-title" x="858" y="56">BigQuery</text>
+        <text class="t-sub" x="858" y="75">dataset a4i_econ · US multi-region</text>
+
+        <rect class="hl" x="858" y="90" width="284" height="150" rx="8"/>
+        <text class="t-title" x="874" y="114">LocalEconomy</text>
+        <text class="t-sub" x="874" y="132">property graph, queried with GQL</text>
+        <path class="mini" d="M904,182 L951,163" marker-end="url(#arr-hl)"/>
+        <path class="mini" d="M904,190 L951,207" marker-end="url(#arr-hl)"/>
+        <path class="mini" d="M975,160 H1027" marker-end="url(#arr-hl)"/>
+        <path class="mini foot" d="M1086,212 H979" marker-end="url(#arr-hl)"/>
+        <circle class="node" cx="895" cy="186" r="9"/>
+        <circle class="node" cx="965" cy="160" r="9"/>
+        <circle class="node" cx="965" cy="210" r="9"/>
+        <circle class="node" cx="1040" cy="160" r="9"/>
+        <rect class="node emp" x="1088" y="202" width="20" height="20" rx="2"/>
+        <text class="t-label t-accent" x="1001" y="150" text-anchor="middle">Supplies</text>
+        <text class="t-label" x="1032" y="230" text-anchor="middle">DrawsFootfall</text>
+        <text class="t-label" x="1098" y="160" text-anchor="middle">2 hops</text>
+
+        <text class="t-strong" x="858" y="266">Real records</text>
+        <text class="t-mono" x="858" y="284">businesses · employer_blocks</text>
+        <text class="t-mono" x="858" y="302">borrowed_from · business_tract</text>
+        <text class="t-strong" x="858" y="330">Modeled pairings (BEA, LEHD rates)</text>
+        <text class="t-mono" x="858" y="348">supplies · draws_footfall_from</text>
+        <text class="t-strong t-amber" x="858" y="376">Scenario inputs</text>
+        <text class="t-mono" x="858" y="394">applications</text>
+        <text class="t-sub" x="858" y="413">financials illustrative</text>
+
+        <!-- desk -> BigQuery (in-process tools) -->
+        <path class="edge" d="M760,125 H838" marker-end="url(#arr)"/>
+        <text class="t-label" x="806" y="117" text-anchor="middle">in-process</text>
+        <text class="t-label" x="806" y="141" text-anchor="middle">tool calls</text>
+
+        <!-- toolbox -> BigQuery -->
+        <path class="edge" d="M760,315 H838" marker-end="url(#arr)"/>
+        <text class="t-label" x="806" y="307" text-anchor="middle">SELECT</text>
+        <text class="t-label" x="806" y="331" text-anchor="middle">only</text>
+
+        <!-- agent -> BigQuery: the graph traversal -->
+        <path class="edge accent" d="M565,420 H836" marker-end="url(#arr-hl)"/>
+        <text class="t-mono t-accent" x="668" y="410" text-anchor="middle">MATCH -[:Supplies]-&gt;{1,2}</text>
+        <text class="t-label t-accent" x="668" y="440" text-anchor="middle">every link ≥ 0.02 · plus SQL</text>
+
+        <!-- Gemini -->
+        <rect class="box" x="840" y="460" width="320" height="95" rx="8"/>
+        <text class="t-title" x="858" y="486">Gemini 3.8 Flash</text>
+        <text class="t-sub" x="858" y="505">Vertex AI · global endpoint</text>
+        <text class="t-sub" x="858" y="526">Plans the tool calls and writes the prose;</text>
+        <text class="t-sub" x="858" y="543">never computes a figure.</text>
+        <path class="edge" d="M565,505 H838" marker-end="url(#arr)"/>
+        <text class="t-label" x="668" y="497" text-anchor="middle">which tools · write the memo</text>
+      </g></g>
+<line x1="24" y1="692" x2="50" y2="692" stroke="#2347c5" stroke-width="3"/><text class="cap" x="60" y="696">Multi-hop graph traversal over the BigQuery property graph LocalEconomy (the required differentiator)</text>
+</svg>
